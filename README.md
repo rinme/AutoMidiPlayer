@@ -24,16 +24,22 @@ If you enjoyed this project, consider [contributing](#contributing) or 🌟 star
 > The reason this appears is because the application is not signed. Signing costs money which can get very expensive.
 
 ## Features
-![AutoMidiPlayer WPF_2022-09-14_04-20-22](https://user-images.githubusercontent.com/25006819/190002309-ba67a17d-6b3f-4239-ba73-1e0e05b9ad1b.png)
-* The ability to change the key. By default, it is keyed to C major.
-* You can play multiple tracks of a MIDI file at the same time.
-* You can enable transposing of notes, otherwise it will skip the notes entirely.
-* Written in C# WPF with W11 Mica design.
-* Change the keyboard layout (QWERTZ, AZERTY, DVORAK, etc.)
-* You can test out MIDI files by playing through the speakers.
-* History and Settings are now persisted even if you close the app.
-* You can have the lyre auto play at a specified time. This can be found inside the settings page.
-* [![](https://img.shields.io/badge/v1.10.2-New!-yellow)](https://github.com/Jed556/AutoMidiPlayer/releases/tag/v1.10.2) Filter tracks using the search box.
+
+### Core Features
+* **Multi-game support** - Play on Genshin Impact (Lyre, Zither, Vintage Lyre) and Heartopia (15-key, 22-key, 37-key)
+* **Spotify-style UI** - Modern player interface with fixed bottom controls
+* **Track Management** - Enable/disable individual MIDI tracks with detailed statistics (note count, black key ratio, avg duration)
+* **Per-song Settings** - Key, speed, and transpose settings are saved per song
+* **Transposition** - Change the key with automatic note transposition
+* **Speed Control** - Adjust playback speed from 0.1x to 4.0x
+* Written in C# WPF with Windows 11 Mica design
+
+### Playback
+* Play multiple tracks of a MIDI file simultaneously
+* Test MIDI files through speakers before playing in-game
+* Change keyboard layouts (QWERTY, QWERTZ, AZERTY, DVORAK, etc.)
+* Auto-play at a scheduled time
+* Filter tracks using the search box
 
 # Piano Sheet [![](https://img.shields.io/badge/v2.1.0.1-New!-yellow)](https://github.com/Jed556/AutoMidiPlayer/releases/tag/v2.1.0.1)
 The first version of the Piano Sheet has been added, this allows you to easily share songs to other people, or for yourself to try. You can change the delimiter as well as the split size, and spacing. This will use the current keyboard layout that you have chosen.
@@ -90,7 +96,7 @@ The short answer is that it's uncertain. Use it at your own risk. Do not play so
 If you just want to run the program, there are precompiled releases that can be found in [here](https://github.com/Jed556/AutoMidiPlayer/releases).
 ### Requirements
 * [Git](https://git-scm.com) for cloning the project
-* [.NET 6.0](https://dotnet.microsoft.com/download) SDK
+* [.NET 8.0](https://dotnet.microsoft.com/download) SDK or later
 
 #### Publish a single binary for Windows
 ```bat
@@ -118,34 +124,11 @@ cd AutoMidiPlayer
 dotnet publish
 ```
 
-### Notes
-If you want to build using the [.Net Core 3.1 SDK](https://dotnet.microsoft.com/download), you need to make a few changes to the project files.
-
-#### Target Framework
-Change the `TargetFramework` of both projects into `netcoreapp3.1`.
-```diff
-- <TargetFramework>net6.0-windows10.0.22621.0</TargetFramework>
-+ <TargetFramework>netcoreapp3.1</TargetFramework>
-```
-
-#### Project SDK
-Change the Project SDK of `AutoMidiPlayer.WPF.csproj` into `Microsoft.NET.Sdk.WindowsDesktop`.
-```diff
-- <Project Sdk="Microsoft.NET.Sdk">
-+ <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-```
-
-#### Language Version
-Change the `LangVersion` of both projects into `preview`.
-```diff
-- <LangVersion>latest</LangVersion>
-+ <LangVersion>preview</LangVersion>
-```
-
 # Special Thanks
-* Credits to [ianespana](https://github.com/ianespana) and their project **[ShawzinBot](https://github.com/ianespana/ShawzinBot)** where most of the inspiration comes from.
-* Credits to [yoroshikun](https://github.com/yoroshikun) and their project **[Flutter Genshin Lyre Auto Player](https://github.com/yoroshikun/flutter_genshin_lyre_player)** for giving ideas such as history and fluent design.
-* **[Lantua](https://github.com/lantua)** for explaining to me music theory; what octaves, transposition, keys, and scales are.
+* This project is inspired by and revamped from **[sabihoshi/GenshinLyreMidiPlayer](https://github.com/sabihoshi/GenshinLyreMidiPlayer)**. Huge thanks for the original work!
+* **[ianespana/ShawzinBot](https://github.com/ianespana/ShawzinBot)** - Original inspiration for the concept
+* **[yoroshikun/flutter_genshin_lyre_player](https://github.com/yoroshikun/flutter_genshin_lyre_player)** - Ideas for history and fluent design
+* **[Lantua](https://github.com/lantua)** - Music theory guidance (octaves, transposition, keys, scales)
 
 # License
 * This project is under the [MIT](LICENSE.md) license.
