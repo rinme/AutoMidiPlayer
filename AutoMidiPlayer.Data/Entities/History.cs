@@ -19,4 +19,10 @@ public class History
     public string Path { get; set; } = null!;
 
     public Transpose? Transpose { get; set; }
+
+    /// Playback speed (0.1 to 4.0).
+    public double? Speed { get; set; }
+
+    /// Comma-separated list of disabled track indices (0-based).
+    public string? DisabledTracks { get; set; }
 }

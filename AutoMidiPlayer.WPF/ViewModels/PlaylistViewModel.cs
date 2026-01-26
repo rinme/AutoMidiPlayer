@@ -186,6 +186,7 @@ public class PlaylistViewModel : Screen
         if (OpenedFile.History.Transpose is not null)
             _main.SettingsView.Transpose = transpose;
         _main.SettingsView.KeyOffset = OpenedFile.History.Key;
+        _main.SettingsView.Speed = OpenedFile.History.Speed ?? 1.0;
     }
 
     public void Previous()

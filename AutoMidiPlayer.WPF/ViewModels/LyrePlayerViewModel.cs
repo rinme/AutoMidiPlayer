@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Windows.Media;
 using Windows.Media.Playback;
+using AutoMidiPlayer.Data;
 using AutoMidiPlayer.Data.Entities;
 using AutoMidiPlayer.Data.Midi;
 using AutoMidiPlayer.Data.Notification;
@@ -29,6 +31,7 @@ public class LyrePlayerViewModel : Screen,
     IHandle<PlayTimerNotification>
 {
     private static readonly Settings Settings = Settings.Default;
+    private readonly IContainer _ioc;
     private readonly IEventAggregator _events;
     private readonly MainWindowViewModel _main;
     private readonly MediaPlayer? _player;
@@ -40,6 +43,7 @@ public class LyrePlayerViewModel : Screen,
 
     public LyrePlayerViewModel(IContainer ioc, MainWindowViewModel main)
     {
+        _ioc = ioc;
         _main = main;
         _timeWatcher = PlaybackCurrentTimeWatcher.Instance;
 
@@ -159,11 +163,31 @@ public class LyrePlayerViewModel : Screen,
         Playlist.OpenedFile = file;
         Playlist.History.Push(file);
 
+        // Re-read the MIDI file from disk to restore all tracks
+        // (InitializePlayback modifies the in-memory MIDI by removing unchecked tracks)
+        file.InitializeMidi();
         InitializeTracks();
         await InitializePlayback();
     }
 
-    public async void Handle(MidiTrack track) => await InitializePlayback();
+    public async void Handle(MidiTrack track)
+    {
+        // Save disabled tracks state to history
+        if (Playlist.OpenedFile is not null)
+        {
+            var disabledIndices = MidiTracks
+                .Where(t => !t.IsChecked)
+                .Select(t => t.Index);
+            Playlist.OpenedFile.History.DisabledTracks = string.Join(",", disabledIndices);
+
+            // Save directly to database
+            await using var db = _ioc.Get<LyreContext>();
+            db.History.Update(Playlist.OpenedFile.History);
+            await db.SaveChangesAsync();
+        }
+
+        await InitializePlayback();
+    }
 
     public async void Handle(PlayTimerNotification message)
     {
@@ -418,7 +442,7 @@ public class LyrePlayerViewModel : Screen,
         var playback = midi.GetPlayback();
 
         Playback = playback;
-        playback.Speed = SettingsPage.SelectedSpeed.Speed;
+        playback.Speed = SettingsPage.Speed;
         playback.InterruptNotesOnStop = true;
         playback.Finished += (_, _) => { Next(); };
         playback.EventPlayed += OnNoteEvent;
@@ -447,10 +471,24 @@ public class LyrePlayerViewModel : Screen,
         if (Playlist.OpenedFile?.Midi is null)
             return;
 
+        // Get disabled track indices from history
+        var disabledIndices = new HashSet<int>();
+        if (!string.IsNullOrEmpty(Playlist.OpenedFile.History.DisabledTracks))
+        {
+            foreach (var indexStr in Playlist.OpenedFile.History.DisabledTracks.Split(','))
+            {
+                if (int.TryParse(indexStr.Trim(), out var index))
+                    disabledIndices.Add(index);
+            }
+        }
+
         MidiTracks.Clear();
-        MidiTracks.AddRange(Playlist.OpenedFile
-            .Midi.GetTrackChunks()
-            .Select(t => new MidiTrack(_events, t)));
+        var trackChunks = Playlist.OpenedFile.Midi.GetTrackChunks().ToList();
+        for (var i = 0; i < trackChunks.Count; i++)
+        {
+            var isChecked = !disabledIndices.Contains(i);
+            MidiTracks.Add(new MidiTrack(_events, trackChunks[i], i, isChecked));
+        }
     }
 
     private void MoveSlider(TimeSpan value)

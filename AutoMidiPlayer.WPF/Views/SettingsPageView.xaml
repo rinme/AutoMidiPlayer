@@ -79,13 +79,13 @@
                         DisplayMemberPath="Value"/>
                 </GroupBox>
 
-                <GroupBox Header="Speed">
-                    <ComboBox
-                        ItemsSource="{Binding MidiSpeeds}"
-                        SelectedItem="{Binding SelectedSpeed}"
-                        SelectedIndex="{Binding Default.SelectedSpeed, Source={StaticResource Settings}}"
-                        DisplayMemberPath="SpeedName"/>
-                </GroupBox>
+                <modern:NumberBox
+                    Header="{Binding SpeedDisplay}"
+                    Value="{Binding Speed}"
+                    Minimum="0.1"
+                    Maximum="4.0"
+                    SmallChange="0.1"
+                    LargeChange="0.5"/>
             </modern:SimpleStackPanel>
 
             <GroupBox Header="Timer">

@@ -45,6 +45,7 @@ public class SettingsPageViewModel : Screen
     private readonly IThemeService _theme;
     private readonly MainWindowViewModel _main;
     private int _keyOffset;
+    private double _speed = 1.0;
 
     public SettingsPageViewModel(IContainer ioc, MainWindowViewModel main)
     {
@@ -174,6 +175,14 @@ public class SettingsPageViewModel : Screen
     };
 
     public MidiSpeed SelectedSpeed { get; set; } = MidiSpeeds[Settings.SelectedSpeed];
+
+    public double Speed
+    {
+        get => _speed;
+        set => SetAndNotify(ref _speed, Math.Round(Math.Clamp(value, 0.1, 4.0), 1));
+    }
+
+    public string SpeedDisplay => $"Speed: {Speed:0.0}x";
 
     public static string GenshinLocation
     {
@@ -381,7 +390,7 @@ public class SettingsPageViewModel : Screen
     {
         var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get,
-            "https://api.github.com/repos/sabihoshi/AutoMidiPlayer/releases");
+            "https://api.github.com/repos/Jed556/AutoMidiPlayer/releases");
 
         var productInfo = new ProductInfoHeaderValue("AutoMidiPlayer", ProgramVersion.ToString());
         request.Headers.UserAgent.Add(productInfo);
@@ -415,6 +424,22 @@ public class SettingsPageViewModel : Screen
         await using var db = _ioc.Get<LyreContext>();
 
         Playlist.OpenedFile.History.Key = KeyOffset;
+        db.Update(Playlist.OpenedFile.History);
+
+        await db.SaveChangesAsync();
+    }
+
+    [UsedImplicitly]
+    private async void OnSpeedChanged()
+    {
+        _events.Publish(this);
+
+        if (Playlist.OpenedFile is null)
+            return;
+
+        await using var db = _ioc.Get<LyreContext>();
+
+        Playlist.OpenedFile.History.Speed = Speed;
         db.Update(Playlist.OpenedFile.History);
 
         await db.SaveChangesAsync();

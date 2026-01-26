@@ -16,7 +16,8 @@ public static class Keyboard
         GenshinFloralZither,
         GenshinVintageLyre,
         Heartopia15,
-        HeartopiaPiano37
+        Heartopia22,
+        Heartopia37
     }
 
     public enum Layout
@@ -35,8 +36,9 @@ public static class Keyboard
         [Instrument.GenshinWindsongLyre] = "Windsong Lyre",
         [Instrument.GenshinFloralZither] = "Floral Zither",
         [Instrument.GenshinVintageLyre] = "Vintage Lyre",
-        [Instrument.Heartopia15] = "Heartopia Piano 15",
-        [Instrument.HeartopiaPiano37] = "Heartopia Piano 37"
+        [Instrument.Heartopia15] = "Heartopia 15",
+        [Instrument.Heartopia22] = "Heartopia Piano 22",
+        [Instrument.Heartopia37] = "Heartopia Piano 37"
     };
 
     public static readonly Dictionary<Layout, string> LayoutNames = new()
@@ -267,8 +269,8 @@ public static class Keyboard
         VirtualKeyCode.OEM_2       // / (C6 - DO)
     };
 
-    // Heartopia Piano 15 notes (diatonic scale - white keys only, C4-C6)
-    private static readonly List<int> HeartopiaPiano15Notes = new()
+    // Heartopia 15 notes (diatonic scale - white keys only, C4-C6)
+    private static readonly List<int> Heartopia15Notes = new()
     {
         // Row 1: C4-G4
         60, // C4
@@ -290,6 +292,70 @@ public static class Keyboard
         81, // A5
         83, // B5
         84  // C6 (15th key)
+    };
+
+    // Heartopia Piano 22 key layout (diatonic scale - white keys only)
+    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia22Layout = new List<VirtualKeyCode>
+    {
+        // Bottom row: Z X C V B N M (C3-B3) - dots below numbers
+        VirtualKeyCode.VK_Z,       // Z (C3 - DO)
+        VirtualKeyCode.VK_X,       // X (D3 - RE)
+        VirtualKeyCode.VK_C,       // C (E3 - MI)
+        VirtualKeyCode.VK_V,       // V (F3 - FA)
+        VirtualKeyCode.VK_B,       // B (G3 - SOL)
+        VirtualKeyCode.VK_N,       // N (A3 - LA)
+        VirtualKeyCode.VK_M,       // M (B3 - SI)
+
+        // Middle row: A S D F G H J (C4-B4) - no dots
+        VirtualKeyCode.VK_A,       // A (C4 - DO)
+        VirtualKeyCode.VK_S,       // S (D4 - RE)
+        VirtualKeyCode.VK_D,       // D (E4 - MI)
+        VirtualKeyCode.VK_F,       // F (F4 - FA)
+        VirtualKeyCode.VK_G,       // G (G4 - SOL)
+        VirtualKeyCode.VK_H,       // H (A4 - LA)
+        VirtualKeyCode.VK_J,       // J (B4 - SI)
+
+        // Top row: Q W E R T Y U I (C5-C6) - dots above numbers
+        VirtualKeyCode.VK_Q,       // Q (C5 - DO)
+        VirtualKeyCode.VK_W,       // W (D5 - RE)
+        VirtualKeyCode.VK_E,       // E (E5 - MI)
+        VirtualKeyCode.VK_R,       // R (F5 - FA)
+        VirtualKeyCode.VK_T,       // T (G5 - SOL)
+        VirtualKeyCode.VK_Y,       // Y (A5 - LA)
+        VirtualKeyCode.VK_U,       // U (B5 - SI)
+        VirtualKeyCode.VK_I        // I (C6 - DO)
+    };
+
+    // Heartopia Piano 22 notes (diatonic scale - white keys only, C3-C6)
+    private static readonly List<int> Heartopia22Notes = new()
+    {
+        // Bottom row: C3-B3 (MIDI 48-59, white keys only)
+        48, // C3  [0] Z
+        50, // D3  [1] X
+        52, // E3  [2] C
+        53, // F3  [3] V
+        55, // G3  [4] B
+        57, // A3  [5] N
+        59, // B3  [6] M
+
+        // Middle row: C4-B4 (MIDI 60-71, white keys only)
+        60, // C4  [7] A
+        62, // D4  [8] S
+        64, // E4  [9] D
+        65, // F4 [10] F
+        67, // G4 [11] G
+        69, // A4 [12] H
+        71, // B4 [13] J
+
+        // Top row: C5-C6 (MIDI 72-84, white keys only)
+        72, // C5 [14] Q
+        74, // D5 [15] W
+        76, // E5 [16] E
+        77, // F5 [17] R
+        79, // G5 [18] T
+        81, // A5 [19] Y
+        83, // B5 [20] U
+        84  // C6 [21] I
     };
 
     // Heartopia Piano 37 key layout (full chromatic scale)
@@ -447,7 +513,8 @@ public static class Keyboard
     {
         // Heartopia Piano has fixed keys regardless of keyboard layout
         Instrument.Heartopia15 => Heartopia15Layout,
-        Instrument.HeartopiaPiano37 => HeartopiaPiano37Layout,
+        Instrument.Heartopia22 => Heartopia22Layout,
+        Instrument.Heartopia37 => HeartopiaPiano37Layout,
         // Other instruments use the selected keyboard layout
         _ => layout switch
         {
@@ -467,8 +534,9 @@ public static class Keyboard
         Instrument.GenshinWindsongLyre => DefaultNotes,
         Instrument.GenshinFloralZither => DefaultNotes,
         Instrument.GenshinVintageLyre => VintageNotes,
-        Instrument.Heartopia15 => HeartopiaPiano15Notes,
-        Instrument.HeartopiaPiano37 => HeartopiaNotes,
+        Instrument.Heartopia15 => Heartopia15Notes,
+        Instrument.Heartopia22 => Heartopia22Notes,
+        Instrument.Heartopia37 => HeartopiaNotes,
         _ => DefaultNotes
     };
 }

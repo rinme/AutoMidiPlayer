@@ -9,16 +9,19 @@ public class MidiTrack
     private readonly IEventAggregator _events;
     private bool _isChecked;
 
-    public MidiTrack(IEventAggregator events, TrackChunk track)
+    public MidiTrack(IEventAggregator events, TrackChunk track, int index, bool isChecked = true)
     {
         _events = events;
-        _isChecked = true;
+        _isChecked = isChecked;
 
         Track = track;
+        Index = index;
         TrackName = track.Events.OfType<SequenceTrackNameEvent>().FirstOrDefault()?.Text;
     }
 
     public bool CanBePlayed => Track.Events.Count(e => e is NoteEvent) > 0;
+
+    public int Index { get; }
 
     public bool IsChecked
     {
