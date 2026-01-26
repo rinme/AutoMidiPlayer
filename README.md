@@ -4,7 +4,7 @@ A MIDI to key player for in-game instruments made using C# and WPF with Windows 
 
 ### Supported Games
 - **Genshin Impact** - Windsong Lyre, Floral Zither, Vintage Lyre
-- **Heartopia** - Piano 37 keys
+- **Heartopia** - 15 keys, 37 keys
 
 If you enjoyed this project, consider [contributing](#contributing) or 🌟 starring the repository. Thank you~
 

@@ -15,6 +15,7 @@ public static class Keyboard
         GenshinWindsongLyre,
         GenshinFloralZither,
         GenshinVintageLyre,
+        Heartopia15,
         HeartopiaPiano37
     }
 
@@ -34,6 +35,7 @@ public static class Keyboard
         [Instrument.GenshinWindsongLyre] = "Windsong Lyre",
         [Instrument.GenshinFloralZither] = "Floral Zither",
         [Instrument.GenshinVintageLyre] = "Vintage Lyre",
+        [Instrument.Heartopia15] = "Heartopia Piano 15",
         [Instrument.HeartopiaPiano37] = "Heartopia Piano 37"
     };
 
@@ -237,6 +239,59 @@ public static class Keyboard
         VirtualKeyCode.VK_U
     };
 
+    // Heartopia 15 key layout (diatonic scale - white keys only)
+    // Row 1 (Y, U, I, O, P): DO, RE, MI, FA, SOL (C4, D4, E4, F4, G4)
+    // Row 2 (H, J, K, L, ;): LA, SI, DO, RE, MI (A4, B4, C5, D5, E5)
+    // Row 3 (N, M, ,, ., /): FA, SOL, LA, SI, DO (F5, G5, A5, B5, C6)
+    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia15Layout = new List<VirtualKeyCode>
+    {
+        // Row 1: Y U I O P (C4-G4)
+        VirtualKeyCode.VK_Y,       // Y (C4 - DO)
+        VirtualKeyCode.VK_U,       // U (D4 - RE)
+        VirtualKeyCode.VK_I,       // I (E4 - MI)
+        VirtualKeyCode.VK_O,       // O (F4 - FA)
+        VirtualKeyCode.VK_P,       // P (G4 - SOL)
+
+        // Row 2: H J K L ; (A4-E5)
+        VirtualKeyCode.VK_H,       // H (A4 - LA)
+        VirtualKeyCode.VK_J,       // J (B4 - SI)
+        VirtualKeyCode.VK_K,       // K (C5 - DO)
+        VirtualKeyCode.VK_L,       // L (D5 - RE)
+        VirtualKeyCode.OEM_1,      // ; (E5 - MI)
+
+        // Row 3: N M , . / (F5-C6)
+        VirtualKeyCode.VK_N,       // N (F5 - FA)
+        VirtualKeyCode.VK_M,       // M (G5 - SOL)
+        VirtualKeyCode.OEM_COMMA,  // , (A5 - LA)
+        VirtualKeyCode.OEM_PERIOD, // . (B5 - SI)
+        VirtualKeyCode.OEM_2       // / (C6 - DO)
+    };
+
+    // Heartopia Piano 15 notes (diatonic scale - white keys only, C4-C6)
+    private static readonly List<int> HeartopiaPiano15Notes = new()
+    {
+        // Row 1: C4-G4
+        60, // C4
+        62, // D4
+        64, // E4
+        65, // F4
+        67, // G4
+
+        // Row 2: A4-E5
+        69, // A4
+        71, // B4
+        72, // C5
+        74, // D5
+        76, // E5
+
+        // Row 3: F5-C6
+        77, // F5
+        79, // G5
+        81, // A5
+        83, // B5
+        84  // C6 (15th key)
+    };
+
     // Heartopia Piano 37 key layout (full chromatic scale)
     // Low octave:    ,  L  .  ;  /  O  0  P  -  [  =  ]
     // Middle octave: Z  S  X  D  C  V  G  B  H  N  J  M
@@ -391,6 +446,7 @@ public static class Keyboard
     public static IEnumerable<VirtualKeyCode> GetLayout(Layout layout, Instrument instrument) => instrument switch
     {
         // Heartopia Piano has fixed keys regardless of keyboard layout
+        Instrument.Heartopia15 => Heartopia15Layout,
         Instrument.HeartopiaPiano37 => HeartopiaPiano37Layout,
         // Other instruments use the selected keyboard layout
         _ => layout switch
@@ -411,6 +467,7 @@ public static class Keyboard
         Instrument.GenshinWindsongLyre => DefaultNotes,
         Instrument.GenshinFloralZither => DefaultNotes,
         Instrument.GenshinVintageLyre => VintageNotes,
+        Instrument.Heartopia15 => HeartopiaPiano15Notes,
         Instrument.HeartopiaPiano37 => HeartopiaNotes,
         _ => DefaultNotes
     };
