@@ -41,13 +41,13 @@
                         Header="Test Mode (Speakers)"
                         IsEnabled="{Binding CanUseSpeakers}"
                         IsOn="{Binding Default.UseSpeakers, Source={StaticResource Settings}}"/>
+                    <modern:ToggleSwitch
+                        Header="Hold notes"
+                        IsOn="{Binding Default.HoldNotes, Source={StaticResource Settings}}"/>
                 </modern:SimpleStackPanel>
 
                 <modern:SimpleStackPanel Orientation="Horizontal"
                                          Spacing="20">
-                    <modern:ToggleSwitch
-                        Header="Hold notes"
-                        IsOn="{Binding Default.HoldNotes, Source={StaticResource Settings}}"/>
                     <modern:ToggleSwitch
                         Header="Merge nearby notes"
                         IsOn="{Binding MergeNotes}"/>
@@ -216,16 +216,11 @@
                            Margin="0,16,0,8"/>
 
                 <GroupBox Header="Theme Mode">
-                    <modern:RadioButtons
-                        SelectedItem="{Binding
-                            Source={x:Static modern:ThemeManager.Current}, Path=ApplicationTheme,
-                            Converter={StaticResource AppThemeConverter}}"
-                        SelectionChanged="{s:Action OnThemeChanged}"
-                        SelectedIndex="{Binding Default.AppTheme, Source={StaticResource Settings}}">
-                        <modern:RadioButtons.ItemsSource>
-                            <theme:AppThemes/>
-                        </modern:RadioButtons.ItemsSource>
-                    </modern:RadioButtons>
+                    <ComboBox
+                        SelectedItem="{Binding SelectedTheme}"
+                        ItemsSource="{x:Static viewModels:SettingsPageViewModel.ThemeOptions}"
+                        DisplayMemberPath="Name"
+                        MinWidth="150"/>
                 </GroupBox>
 
                 <GroupBox Header="Accent Color">

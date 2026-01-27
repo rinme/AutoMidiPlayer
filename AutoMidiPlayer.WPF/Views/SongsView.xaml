@@ -18,7 +18,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Top Bar: Search and Sort -->
@@ -354,31 +353,5 @@
                 </Style>
             </ListView.ItemContainerStyle>
         </ListView>
-
-        <!-- Bottom Actions -->
-        <Border Grid.Row="3"
-                Margin="0,5"
-                Padding="8"
-                CornerRadius="4"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Add to Queue actions -->
-                <modern:SimpleStackPanel Grid.Column="1"
-                                         Orientation="Horizontal"
-                                         Spacing="4">
-                    <Button Command="{s:Action AddToQueue}"
-                            Content="Add to Queue"
-                            Padding="12,6"/>
-                    <Button Command="{s:Action AddAllToQueue}"
-                            Content="Add All"
-                            Padding="12,6"/>
-                </modern:SimpleStackPanel>
-            </Grid>
-        </Border>
     </Grid>
 </UserControl>

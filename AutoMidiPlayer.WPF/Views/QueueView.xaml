@@ -18,7 +18,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Top Bar: Search and Actions -->
@@ -277,27 +276,5 @@
                 </Style>
             </ListView.ItemContainerStyle>
         </ListView>
-
-        <!-- Bottom Controls -->
-        <Border Grid.Row="3"
-                Margin="0,5"
-                Padding="8"
-                CornerRadius="4"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Current song info -->
-                <TextBlock Grid.Column="1"
-                           VerticalAlignment="Center"
-                           Opacity="0.8"
-                           Margin="10,0">
-                    Now playing: <Run Text="{Binding OpenedFile.Title, Mode=OneWay, FallbackValue='Nothing'}"/>
-                </TextBlock>
-            </Grid>
-        </Border>
     </Grid>
 </UserControl>

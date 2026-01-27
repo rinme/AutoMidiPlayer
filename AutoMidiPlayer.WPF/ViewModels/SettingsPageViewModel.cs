@@ -52,6 +52,14 @@ public class SettingsPageViewModel : Screen
         new("Cyan", "#06B6D4")
     };
 
+    // Theme options for dropdown
+    public static List<ThemeOption> ThemeOptions { get; } = new()
+    {
+        new("Light", ApplicationTheme.Light),
+        new("Dark", ApplicationTheme.Dark),
+        new("Use system setting", null)
+    };
+
     private static readonly Settings Settings = Settings.Default;
     private readonly IContainer _ioc;
     private readonly IEventAggregator _events;
@@ -60,6 +68,7 @@ public class SettingsPageViewModel : Screen
     private int _keyOffset;
     private double _speed = 1.0;
     private AccentColorOption _selectedAccentColor = null!;
+    private ThemeOption _selectedTheme = null!;
 
     public SettingsPageViewModel(IContainer ioc, MainWindowViewModel main)
     {
@@ -70,17 +79,27 @@ public class SettingsPageViewModel : Screen
 
         _keyOffset = Queue.OpenedFile?.Song.Key ?? 0;
 
-        ThemeManager.Current.ApplicationTheme = Settings.AppTheme switch
+        // Initialize theme from settings
+        _selectedTheme = Settings.AppTheme switch
         {
-            0 => ApplicationTheme.Light,
-            1 => ApplicationTheme.Dark,
-            _ => null
+            0 => ThemeOptions[0], // Light
+            1 => ThemeOptions[1], // Dark
+            _ => ThemeOptions[2]  // System
         };
+        ThemeManager.Current.ApplicationTheme = _selectedTheme.Value;
 
         // Initialize accent color from settings
         _selectedAccentColor = AccentColors.FirstOrDefault(c => c.ColorHex == Settings.AccentColor)
             ?? AccentColors[0]; // Default to Spotify Green
         ApplyAccentColor(_selectedAccentColor.ColorHex);
+
+        // Initialize instrument from settings
+        SelectedInstrument = Keyboard.InstrumentNames
+            .FirstOrDefault(i => (int)i.Key == Settings.SelectedInstrument);
+
+        // Initialize layout from settings
+        SelectedLayout = Keyboard.LayoutNames
+            .FirstOrDefault(l => (int)l.Key == Settings.SelectedLayout);
     }
 
     public AccentColorOption SelectedAccentColor
@@ -108,6 +127,25 @@ public class SettingsPageViewModel : Screen
         {
             // Fallback to Spotify green if color parsing fails
             ThemeManager.Current.AccentColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1DB954");
+        }
+    }
+
+    public ThemeOption SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (SetAndNotify(ref _selectedTheme, value) && value is not null)
+            {
+                ThemeManager.Current.ApplicationTheme = value.Value;
+                _theme.SetTheme(value.Value switch
+                {
+                    ApplicationTheme.Light => ThemeType.Light,
+                    ApplicationTheme.Dark => ThemeType.Dark,
+                    _ => _theme.GetSystemTheme()
+                });
+                Settings.Modify(s => s.AppTheme = (int?)value.Value ?? -1);
+            }
         }
     }
 
@@ -601,6 +639,20 @@ public class AccentColorOption
         ColorHex = colorHex;
         ColorBrush = new System.Windows.Media.SolidColorBrush(
             (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex));
+    }
+
+    public override string ToString() => Name;
+}
+
+public class ThemeOption
+{
+    public string Name { get; }
+    public ApplicationTheme? Value { get; }
+
+    public ThemeOption(string name, ApplicationTheme? value)
+    {
+        Name = name;
+        Value = value;
     }
 
     public override string ToString() => Name;
