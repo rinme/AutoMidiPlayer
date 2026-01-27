@@ -146,7 +146,15 @@ public class SettingsPageViewModel : Screen
     public int KeyOffset
     {
         get => _keyOffset;
-        set => SetAndNotify(ref _keyOffset, Math.Clamp(value, MinOffset, MaxOffset));
+        set
+        {
+            if (SetAndNotify(ref _keyOffset, Math.Clamp(value, MinOffset, MaxOffset)))
+            {
+                // Update the selected key option to match
+                _selectedKeyOption = KeyOptions.FirstOrDefault(k => k.Value == _keyOffset);
+                NotifyOfPropertyChange(nameof(SelectedKeyOption));
+            }
+        }
     }
 
     public int MaxOffset => KeyOffsets.Keys.Max();
@@ -176,7 +184,16 @@ public class SettingsPageViewModel : Screen
     public double Speed
     {
         get => _speed;
-        set => SetAndNotify(ref _speed, Math.Round(Math.Clamp(value, 0.1, 4.0), 1));
+        set
+        {
+            if (SetAndNotify(ref _speed, Math.Round(Math.Clamp(value, 0.1, 4.0), 1)))
+            {
+                // Update the selected speed option to match
+                _selectedSpeedOption = SpeedOptions.FirstOrDefault(s => Math.Abs(s.Value - _speed) < 0.01)
+                    ?? SpeedOptions.First(s => s.Value == 1.0);
+                NotifyOfPropertyChange(nameof(SelectedSpeedOption));
+            }
+        }
     }
 
     public string SpeedDisplay => $"Speed: {Speed:0.0}x";
