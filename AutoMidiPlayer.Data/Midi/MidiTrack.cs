@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Timers;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Stylet;
 
 namespace AutoMidiPlayer.Data.Midi;
 
-public class MidiTrack
+public class MidiTrack : INotifyPropertyChanged
 {
     private readonly IEventAggregator _events;
     private bool _isChecked;
+    private bool _isActive;
+    private Timer? _glowTimer;
+    private HashSet<int>? _noteNumbers; // Cached note numbers for fast lookup
+    private const int GlowDurationMs = 150; // How long the glow stays on
 
     // Black keys (sharps/flats) in MIDI note numbers mod 12: C#, D#, F#, G#, A#
     private static readonly HashSet<int> BlackKeys = new() { 1, 3, 6, 8, 10 };
@@ -32,6 +39,9 @@ public class MidiTrack
     {
         var notes = Track.GetNotes().ToList();
         NotesCount = notes.Count;
+
+        // Cache note numbers for fast lookup during playback
+        _noteNumbers = notes.Select(n => (int)n.NoteNumber).ToHashSet();
 
         if (NotesCount == 0)
         {
@@ -87,4 +97,57 @@ public class MidiTrack
     public string? TrackName { get; }
 
     public TrackChunk Track { get; }
+
+    /// <summary>
+    /// Gets or sets whether this track is currently playing a note (for glow effect)
+    /// </summary>
+    public bool IsActive
+    {
+        get => _isActive;
+        private set
+        {
+            if (_isActive != value)
+            {
+                _isActive = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Triggers the glow effect for this track
+    /// </summary>
+    public void TriggerGlow()
+    {
+        // Stop existing timer if any
+        _glowTimer?.Stop();
+        _glowTimer?.Dispose();
+
+        // Set active
+        IsActive = true;
+
+        // Create timer to turn off glow
+        _glowTimer = new Timer(GlowDurationMs);
+        _glowTimer.AutoReset = false;
+        _glowTimer.Elapsed += (_, _) =>
+        {
+            IsActive = false;
+            _glowTimer?.Dispose();
+            _glowTimer = null;
+        };
+        _glowTimer.Start();
+    }
+
+    /// <summary>
+    /// Checks if this track contains the given note number (O(1) lookup)
+    /// </summary>
+    public bool ContainsNote(int noteNumber) =>
+        _noteNumbers?.Contains(noteNumber) ?? false;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }

@@ -29,12 +29,59 @@
 			<ItemsControl ItemsSource="{Binding MidiTracks}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
-						<Border Margin="0,4"
+						<Border x:Name="TrackBorder"
+								Margin="0,4"
 								Padding="12,8"
-								BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-								BorderThickness="1"
+								BorderThickness="2"
 								CornerRadius="6"
 								Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+							<Border.Style>
+								<Style TargetType="Border">
+									<Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
+									<Setter Property="Effect">
+										<Setter.Value>
+											<DropShadowEffect 
+												Color="#1DB954"
+												BlurRadius="20"
+												ShadowDepth="0"
+												Opacity="0"/>
+										</Setter.Value>
+									</Setter>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding IsActive}" Value="True">
+											<Setter Property="BorderBrush" Value="#1DB954"/>
+											<DataTrigger.EnterActions>
+												<BeginStoryboard>
+													<Storyboard>
+														<DoubleAnimation
+															Storyboard.TargetProperty="(Border.Effect).(DropShadowEffect.Opacity)"
+															To="1"
+															Duration="0:0:0.05"/>
+														<DoubleAnimation
+															Storyboard.TargetProperty="(Border.Effect).(DropShadowEffect.BlurRadius)"
+															To="25"
+															Duration="0:0:0.05"/>
+													</Storyboard>
+												</BeginStoryboard>
+											</DataTrigger.EnterActions>
+											<DataTrigger.ExitActions>
+												<BeginStoryboard>
+													<Storyboard>
+														<DoubleAnimation
+															Storyboard.TargetProperty="(Border.Effect).(DropShadowEffect.Opacity)"
+															To="0"
+															Duration="0:0:0.2"/>
+														<DoubleAnimation
+															Storyboard.TargetProperty="(Border.Effect).(DropShadowEffect.BlurRadius)"
+															To="20"
+															Duration="0:0:0.2"/>
+													</Storyboard>
+												</BeginStoryboard>
+											</DataTrigger.ExitActions>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</Border.Style>
 							<Grid>
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="Auto"/>

@@ -531,6 +531,15 @@ public class LyrePlayerViewModel : Screen,
         var instrument = SettingsPage.SelectedInstrument.Key;
         var note = ApplyNoteSettings(instrument, noteEvent.NoteNumber);
 
+        // Trigger glow effect on tracks containing this note (only for NoteOn)
+        if (noteEvent.EventType == MidiEventType.NoteOn && noteEvent.Velocity > 0)
+        {
+            foreach (var track in MidiTracks.Where(t => t.IsChecked && t.ContainsNote(noteEvent.NoteNumber)))
+            {
+                track.TriggerGlow();
+            }
+        }
+
         if (Settings.UseSpeakers)
         {
             noteEvent.NoteNumber = new((byte)note);
