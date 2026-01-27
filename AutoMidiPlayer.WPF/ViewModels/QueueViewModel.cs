@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using AutoMidiPlayer.Data;
 using AutoMidiPlayer.Data.Entities;
 using AutoMidiPlayer.Data.Properties;
+using AutoMidiPlayer.WPF.ModernWPF;
 using AutoMidiPlayer.WPF.ModernWPF.Errors;
 using Melanchall.DryWetMidi.Core;
 using ModernWpf;
@@ -173,8 +175,9 @@ public class QueueViewModel : Screen
         }
         else
         {
-            // Otherwise, play this song
+            // Otherwise, load and play this song
             _events.Publish(file);
+            await TrackView.PlayPause();
         }
     }
 
@@ -197,6 +200,49 @@ public class QueueViewModel : Screen
             Tracks.Remove(SelectedFile);
             OnQueueModified();
         }
+    }
+
+    public async Task EditSong(MidiFile file)
+    {
+        // Get native BPM from MIDI file
+        var nativeBpm = file.GetNativeBpm();
+
+        var dialog = new ImportDialog(
+            file.Song.Title ?? Path.GetFileNameWithoutExtension(file.Path),
+            file.Song.Key,
+            file.Song.Transpose ?? Transpose.Ignore,
+            file.Song.Author,
+            file.Song.Album,
+            file.Song.DateAdded,
+            nativeBpm,
+            file.Song.Bpm);
+
+        var result = await dialog.ShowAsync();
+        if (result != ModernWpf.Controls.ContentDialogResult.Primary) return;
+
+        // Update song properties
+        file.Song.Title = string.IsNullOrWhiteSpace(dialog.SongTitle) ? Path.GetFileNameWithoutExtension(file.Path) : dialog.SongTitle;
+        file.Song.Author = string.IsNullOrWhiteSpace(dialog.SongAuthor) ? null : dialog.SongAuthor;
+        file.Song.Album = string.IsNullOrWhiteSpace(dialog.SongAlbum) ? null : dialog.SongAlbum;
+        file.Song.DateAdded = dialog.SongDateAdded;
+        file.Song.Key = dialog.SongKey;
+        file.Song.Transpose = dialog.SongTranspose;
+        file.Song.Bpm = dialog.SongBpm;
+
+        await using var db = _ioc.Get<LyreContext>();
+        db.Songs.Update(file.Song);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task DeleteSong(MidiFile file)
+    {
+        await using var db = _ioc.Get<LyreContext>();
+        db.Songs.Remove(file.Song);
+        Tracks.Remove(file);
+        _main.SongsView.Tracks.Remove(file);
+        await db.SaveChangesAsync();
+        _main.SongsView.ApplySort();
+        OnQueueModified();
     }
 
     public void MoveUp()
@@ -394,5 +440,17 @@ public class QueueViewModel : Screen
         {
             file.Position = playlist.IndexOf(file);
         }
+    }
+
+    /// <summary>
+    /// Refresh the currently playing song in the list to reflect property changes
+    /// </summary>
+    public void RefreshCurrentSong()
+    {
+        // Force UI to refresh by notifying FilteredTracks changed
+        System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
+        {
+            NotifyOfPropertyChange(nameof(FilteredTracks));
+        });
     }
 }

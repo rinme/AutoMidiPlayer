@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using AutoMidiPlayer.Data.Midi;
 using AutoMidiPlayer.WPF.ModernWPF;
 using AutoMidiPlayer.WPF.ViewModels;
 
@@ -21,46 +20,39 @@ public partial class SongsView : UserControl
         if (DataContext is SongsViewModel viewModel && _dragDropHelper == null)
         {
             _dragDropHelper = new ListViewDragDropHelper(
-                SongsListView,
+                TrackList.ListView,
                 viewModel.Tracks,
                 viewModel.ApplySort);
         }
     }
 
     /// <summary>
-    /// Sync selected items to the ViewModel's SelectedFiles collection
+    /// Handle play/pause button click from TrackListControl
     /// </summary>
-    private void SongsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void TrackList_PlayPauseClick(object sender, RoutedEventArgs e)
     {
-        if (DataContext is SongsViewModel viewModel)
+        if (e is TrackListEventArgs args && DataContext is SongsViewModel viewModel)
         {
-            viewModel.SelectedFiles.Clear();
-            foreach (var item in SongsListView.SelectedItems)
-            {
-                if (item is MidiFile file)
-                {
-                    viewModel.SelectedFiles.Add(file);
-                }
-            }
+            viewModel.PlayPauseFromSongs(args.File);
         }
     }
 
     /// <summary>
-    /// Open context menu when 3-dot menu button is clicked
+    /// Handle menu button click from TrackListControl
     /// </summary>
-    private void MenuButton_Click(object sender, RoutedEventArgs e)
+    private void TrackList_MenuClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button &&
-            DataContext is SongsViewModel viewModel)
-        {
-            // Select the clicked item if not already selected
-            if (button.Tag is MidiFile file && !viewModel.SelectedFiles.Contains(file))
-            {
-                SongsListView.SelectedItem = file;
-            }
+        // Menu is automatically opened by TrackListControl
+    }
 
-            // Open the ListView's context menu
-            SongsListView.ContextMenu.IsOpen = true;
+    /// <summary>
+    /// Handle double-click on a track - plays the song
+    /// </summary>
+    private void TrackList_ItemDoubleClick(object sender, RoutedEventArgs e)
+    {
+        if (e is TrackListEventArgs args && DataContext is SongsViewModel viewModel)
+        {
+            viewModel.PlayPauseFromSongs(args.File);
         }
     }
 

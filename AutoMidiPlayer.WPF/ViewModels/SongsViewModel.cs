@@ -352,6 +352,7 @@ public class SongsViewModel : Screen
         {
             // Otherwise, add to queue and play this song
             PlaySong(file);
+            await TrackView.PlayPause();
         }
     }
 

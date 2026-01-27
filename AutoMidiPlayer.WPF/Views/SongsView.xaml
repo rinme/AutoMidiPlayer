@@ -9,13 +9,11 @@
     xmlns:modern="http://schemas.modernwpf.com/2019"
     xmlns:s="https://github.com/canton7/Stylet"
     xmlns:viewModels="clr-namespace:AutoMidiPlayer.WPF.ViewModels"
-    xmlns:midi="clr-namespace:AutoMidiPlayer.Data.Midi;assembly=AutoMidiPlayer.Data"
     xmlns:modernWpf="clr-namespace:AutoMidiPlayer.WPF.ModernWPF"
     d:DataContext="{d:DesignInstance Type=viewModels:SongsViewModel}">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -78,89 +76,18 @@
             </modern:SimpleStackPanel>
         </Grid>
 
-        <!-- Column Headers (Spotify-style) -->
-        <Border Grid.Row="1"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="12,8"
-                Margin="0,0,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="*"
-                                      MinWidth="150"/>
-                    <ColumnDefinition Width="100"/>
-                    <ColumnDefinition Width="60"/>
-                    <ColumnDefinition Width="50"/>
-                    <ColumnDefinition Width="70"/>
-                    <ColumnDefinition Width="80"/>
-                    <ColumnDefinition Width="60"/>
-                    <ColumnDefinition Width="40"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0"
-                           Text="#"
-                           Opacity="0.6"
-                           FontSize="12"/>
-                <Button Grid.Column="1"
-                        Content="Title"
-                        Background="Transparent"
-                        HorizontalAlignment="Left"
-                        Padding="0"
-                        Command="{s:Action SetSortTitle}"
-                        Opacity="0.6"
-                        FontSize="12"/>
-                <TextBlock Grid.Column="2"
-                           Text="Album"
-                           Opacity="0.6"
-                           FontSize="12"/>
-                <TextBlock Grid.Column="3"
-                           Text="Key"
-                           Opacity="0.6"
-                           FontSize="12"/>
-                <TextBlock Grid.Column="4"
-                           Text="BPM"
-                           Opacity="0.6"
-                           FontSize="12"/>
-                <TextBlock Grid.Column="5"
-                           Text="Transpose"
-                           Opacity="0.6"
-                           FontSize="12"/>
-                <Button Grid.Column="6"
-                        Content="Date Added"
-                        Background="Transparent"
-                        HorizontalAlignment="Left"
-                        Padding="0"
-                        Command="{s:Action SetSortDateAdded}"
-                        Opacity="0.6"
-                        FontSize="12"/>
-                <Button Grid.Column="7"
-                        Background="Transparent"
-                        HorizontalAlignment="Right"
-                        Padding="0"
-                        Command="{s:Action SetSortDuration}"
-                        ToolTip="Duration">
-                    <ui:FontIcon Glyph="&#xE916;"
-                                 FontFamily="{StaticResource MdlFontFamily}"
-                                 FontSize="12"
-                                 Opacity="0.6"/>
-                </Button>
-            </Grid>
-        </Border>
-
-        <!-- Songs List (Spotify-style rows) with multi-select -->
-        <ListView x:Name="SongsListView"
-                  Grid.Row="2"
-                  Margin="0,0,0,5"
-                  ItemsSource="{Binding SortedTracks}"
-                  VirtualizingPanel.VirtualizationMode="Recycling"
-                  MouseDoubleClick="{s:Action OnFileDoubleClick}"
-                  SelectedItem="{Binding SelectedFile}"
-                  SelectionMode="Extended"
-                  SelectionChanged="SongsListView_SelectionChanged"
-                  BorderThickness="0"
-                  Background="Transparent">
-            <ListView.ContextMenu>
+        <!-- Track List -->
+        <modernWpf:TrackListControl x:Name="TrackList"
+                                    Grid.Row="1"
+                                    ItemsSource="{Binding SortedTracks}"
+                                    SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                                    OpenedFile="{Binding QueueView.OpenedFile}"
+                                    IsPlaying="{Binding TrackView.IsPlaying}"
+                                    AllowReorder="True"
+                                    ItemDoubleClick="TrackList_ItemDoubleClick"
+                                    PlayPauseClick="TrackList_PlayPauseClick"
+                                    MenuClick="TrackList_MenuClick">
+            <modernWpf:TrackListControl.ItemContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Add to Queue"
                               Click="AddToQueue_Click">
@@ -188,255 +115,7 @@
                         </MenuItem.Icon>
                     </MenuItem>
                 </ContextMenu>
-            </ListView.ContextMenu>
-            <ListView.ItemTemplate>
-                <DataTemplate DataType="midi:MidiFile">
-                    <Grid Height="52">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="40"/>
-                            <ColumnDefinition Width="*"
-                                              MinWidth="150"/>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="50"/>
-                            <ColumnDefinition Width="70"/>
-                            <ColumnDefinition Width="80"/>
-                            <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="40"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- # Position / Equalizer when playing / Play Button on hover -->
-                        <Grid Grid.Column="0"
-                              HorizontalAlignment="Right"
-                              Margin="0,0,8,0">
-                            <!-- Position number (hidden only when actively playing this song) -->
-                            <TextBlock x:Name="PositionText"
-                                       Text="{Binding Position}"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Right"
-                                       Opacity="0.6">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <!-- Hide when actively playing (file matches AND playback running) -->
-                                            <DataTrigger Value="True">
-                                                <DataTrigger.Binding>
-                                                    <MultiBinding Converter="{x:Static modernWpf:IsActivelyPlayingConverter.Instance}">
-                                                        <Binding/>
-                                                        <Binding Path="DataContext.QueueView.OpenedFile"
-                                                                 RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                        <Binding Path="DataContext.TrackView.IsPlaying"
-                                                                 RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                    </MultiBinding>
-                                                </DataTrigger.Binding>
-                                                <Setter Property="Visibility"
-                                                        Value="Collapsed"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-
-                            <!-- Animated Equalizer bars (shown only when actively playing this song) -->
-                            <modernWpf:EqualizerControl x:Name="EqualizerBars"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center">
-                                <modernWpf:EqualizerControl.Style>
-                                    <Style TargetType="modernWpf:EqualizerControl">
-                                        <Setter Property="Visibility"
-                                                Value="Collapsed"/>
-                                        <Setter Property="IsPlaying"
-                                                Value="False"/>
-                                        <Style.Triggers>
-                                            <!-- Show only when actively playing (file matches AND playback running) -->
-                                            <DataTrigger Value="True">
-                                                <DataTrigger.Binding>
-                                                    <MultiBinding Converter="{x:Static modernWpf:IsActivelyPlayingConverter.Instance}">
-                                                        <Binding/>
-                                                        <Binding Path="DataContext.QueueView.OpenedFile"
-                                                                 RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                        <Binding Path="DataContext.TrackView.IsPlaying"
-                                                                 RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                    </MultiBinding>
-                                                </DataTrigger.Binding>
-                                                <Setter Property="Visibility"
-                                                        Value="Visible"/>
-                                                <Setter Property="IsPlaying"
-                                                        Value="True"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </modernWpf:EqualizerControl.Style>
-                            </modernWpf:EqualizerControl>
-
-                            <!-- Play/Pause Button on hover -->
-                            <Button x:Name="PlayPauseButton"
-                                    Visibility="Collapsed"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Padding="0"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Right"
-                                    Command="{s:Action PlayPauseFromSongs}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Play">
-                                <ui:FontIcon x:Name="PlayPauseIcon"
-                                             FontFamily="{StaticResource MdlFontFamily}"
-                                             FontSize="14">
-                                    <ui:FontIcon.Glyph>
-                                        <MultiBinding Converter="{x:Static modernWpf:PlayPauseGlyphConverter.Instance}">
-                                            <Binding/>
-                                            <Binding Path="DataContext.QueueView.OpenedFile"
-                                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                            <Binding Path="DataContext.TrackView.IsPlaying"
-                                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                        </MultiBinding>
-                                    </ui:FontIcon.Glyph>
-                                </ui:FontIcon>
-                            </Button>
-                        </Grid>
-
-                        <!-- Album Art + Title + Author (Spotify-style) -->
-                        <Grid Grid.Column="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Album Art placeholder -->
-                            <Border Grid.Column="0"
-                                    Width="40"
-                                    Height="40"
-                                    CornerRadius="4"
-                                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                                    Margin="0,0,12,0"
-                                    VerticalAlignment="Center">
-                                <ui:FontIcon Glyph="&#xE8D6;"
-                                             FontFamily="{StaticResource MdlFontFamily}"
-                                             FontSize="18"
-                                             Opacity="0.5"
-                                             HorizontalAlignment="Center"
-                                             VerticalAlignment="Center"/>
-                            </Border>
-
-                            <!-- Title + Author stacked -->
-                            <StackPanel Grid.Column="1"
-                                        VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Title}"
-                                           TextTrimming="CharacterEllipsis">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock"
-                                               BasedOn="{StaticResource BodyTextBlockStyle}">
-                                            <Style.Triggers>
-                                                <DataTrigger Value="True">
-                                                    <DataTrigger.Binding>
-                                                        <MultiBinding Converter="{x:Static modernWpf:IsPlayingToBoolConverter.Instance}">
-                                                            <Binding/>
-                                                            <Binding Path="DataContext.QueueView.OpenedFile"
-                                                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                        </MultiBinding>
-                                                    </DataTrigger.Binding>
-                                                    <Setter Property="Foreground"
-                                                            Value="{DynamicResource SystemControlHighlightAccentBrush}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBlock TextTrimming="CharacterEllipsis"
-                                           FontSize="12"
-                                           Opacity="0.6"
-                                           Text="{Binding Song.Author, TargetNullValue='Unknown Artist', FallbackValue='Unknown Artist'}"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Album -->
-                        <TextBlock Grid.Column="2"
-                                   Text="{Binding Song.Album}"
-                                   VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis"
-                                   Opacity="0.7"/>
-
-                        <!-- Key -->
-                        <TextBlock Grid.Column="3"
-                                   Text="{Binding Song.Key, Converter={x:Static modernWpf:KeyToNoteConverter.Instance}}"
-                                   VerticalAlignment="Center"
-                                   Opacity="0.7"/>
-
-                        <!-- BPM -->
-                        <TextBlock Grid.Column="4"
-                                   Text="{Binding EffectiveBpm, StringFormat={}{0:F0}}"
-                                   VerticalAlignment="Center"
-                                   Opacity="0.6"/>
-
-                        <!-- Transpose -->
-                        <TextBlock Grid.Column="5"
-                                   Text="{Binding Song.Transpose, Converter={x:Static modernWpf:TransposeToDisplayConverter.Instance}}"
-                                   ToolTip="{Binding Song.Transpose, Converter={x:Static modernWpf:TransposeToTooltipConverter.Instance}}"
-                                   VerticalAlignment="Center"
-                                   Opacity="0.6"/>
-
-                        <!-- Date Added -->
-                        <TextBlock Grid.Column="6"
-                                   Text="{Binding Song.DateAdded, StringFormat={}{0:MMM d, yyyy}}"
-                                   VerticalAlignment="Center"
-                                   Opacity="0.6"/>
-
-                        <!-- Duration -->
-                        <TextBlock Grid.Column="7"
-                                   Text="{Binding Duration, StringFormat=m\\:ss}"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Right"
-                                   Opacity="0.6"/>
-
-                        <!-- 3-dot menu -->
-                        <Button Grid.Column="8"
-                                x:Name="MenuButton"
-                                Visibility="Collapsed"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Padding="8,0"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Center"
-                                ToolTip="More options"
-                                Click="MenuButton_Click"
-                                Tag="{Binding}">
-                            <ui:FontIcon Glyph="&#xE712;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="14"
-                                         Opacity="0.6"/>
-                        </Button>
-                    </Grid>
-                    <DataTemplate.Triggers>
-                        <Trigger Property="IsMouseOver"
-                                 Value="True">
-                            <Setter TargetName="PositionText"
-                                    Property="Visibility"
-                                    Value="Collapsed"/>
-                            <Setter TargetName="EqualizerBars"
-                                    Property="Visibility"
-                                    Value="Collapsed"/>
-                            <Setter TargetName="PlayPauseButton"
-                                    Property="Visibility"
-                                    Value="Visible"/>
-                            <Setter TargetName="MenuButton"
-                                    Property="Visibility"
-                                    Value="Visible"/>
-                        </Trigger>
-                    </DataTemplate.Triggers>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem"
-                       BasedOn="{StaticResource DefaultListViewItemStyle}">
-                    <Setter Property="HorizontalContentAlignment"
-                            Value="Stretch"/>
-                    <Setter Property="Padding"
-                            Value="12,4"/>
-                    <Setter Property="MinHeight"
-                            Value="56"/>
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
+            </modernWpf:TrackListControl.ItemContextMenu>
+        </modernWpf:TrackListControl>
     </Grid>
 </UserControl>

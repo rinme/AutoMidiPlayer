@@ -43,7 +43,21 @@ public class MidiFile : Screen
 
     public string? Author => Song.Author;
 
-    public TimeSpan Duration => Midi.GetDuration<MetricTimeSpan>();
+    public TimeSpan Duration
+    {
+        get
+        {
+            try
+            {
+                return Midi.GetDuration<MetricTimeSpan>();
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Handle corrupted MIDI files gracefully
+                return TimeSpan.Zero;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the BPM from the MIDI file's tempo map. Returns the tempo at the start of the file.

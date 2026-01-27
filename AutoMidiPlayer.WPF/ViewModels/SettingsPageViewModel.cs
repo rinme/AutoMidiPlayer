@@ -568,6 +568,7 @@ public class SettingsPageViewModel : Screen
 
         // Notify UI to refresh
         _main.SongsView.RefreshCurrentSong();
+        _main.QueueView.RefreshCurrentSong();
     }
 
     [UsedImplicitly]
@@ -587,6 +588,7 @@ public class SettingsPageViewModel : Screen
 
         // Notify UI to refresh
         _main.SongsView.RefreshCurrentSong();
+        _main.QueueView.RefreshCurrentSong();
     }
 
     [UsedImplicitly]
@@ -635,6 +637,7 @@ public class SettingsPageViewModel : Screen
 
         // Notify UI to refresh
         _main.SongsView.RefreshCurrentSong();
+        _main.QueueView.RefreshCurrentSong();
     }
 }
 

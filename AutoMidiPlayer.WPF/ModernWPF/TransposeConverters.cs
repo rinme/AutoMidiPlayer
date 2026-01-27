@@ -204,3 +204,38 @@ public class PlayPauseGlyphConverter : IMultiValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converter to get the 1-based display index of an item in a list.
+/// Values[0]: The MidiFile of the row
+/// Values[1]: The ItemsSource collection
+/// Returns the 1-based index of the item in the collection.
+/// </summary>
+public class ItemIndexConverter : IMultiValueConverter
+{
+    public static ItemIndexConverter Instance { get; } = new();
+
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 2 &&
+            values[0] is MidiFile item &&
+            values[1] is System.Collections.IEnumerable collection)
+        {
+            int index = 1;
+            foreach (var obj in collection)
+            {
+                if (ReferenceEquals(obj, item))
+                {
+                    return index.ToString();
+                }
+                index++;
+            }
+        }
+        return "?";
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
