@@ -350,13 +350,18 @@ public class SongsViewModel : Screen
         var file = SelectedFiles.Count == 1 ? SelectedFiles[0] : SelectedFile;
         if (file is null) return;
 
+        // Get native BPM from MIDI file
+        var nativeBpm = file.GetNativeBpm();
+
         var dialog = new ImportDialog(
             file.Song.Title ?? Path.GetFileNameWithoutExtension(file.Path),
             file.Song.Key,
             file.Song.Transpose ?? Transpose.Ignore,
             file.Song.Author,
             file.Song.Album,
-            file.Song.DateAdded);
+            file.Song.DateAdded,
+            nativeBpm,
+            file.Song.Bpm);
 
         var result = await dialog.ShowAsync();
         if (result != ContentDialogResult.Primary) return;
@@ -368,6 +373,7 @@ public class SongsViewModel : Screen
         file.Song.DateAdded = dialog.SongDateAdded;
         file.Song.Key = dialog.SongKey;
         file.Song.Transpose = dialog.SongTranspose;
+        file.Song.Bpm = dialog.SongBpm;
 
         await using var db = _ioc.Get<LyreContext>();
         db.Songs.Update(file.Song);

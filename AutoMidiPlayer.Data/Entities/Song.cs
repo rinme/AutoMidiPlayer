@@ -33,6 +33,9 @@ public class Song
     /// Playback speed (0.1 to 4.0).
     public double? Speed { get; set; }
 
+    /// Custom BPM override. If null, uses MIDI file's native BPM.
+    public double? Bpm { get; set; }
+
     /// Comma-separated list of disabled track indices (0-based).
     public string? DisabledTracks { get; set; }
 }

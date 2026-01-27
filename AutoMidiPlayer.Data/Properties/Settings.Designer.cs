@@ -363,5 +363,50 @@ namespace AutoMidiPlayer.Data.Properties
                 this["QueueLoopMode"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CurrentSongId
+        {
+            get
+            {
+                return ((string)(this["CurrentSongId"]));
+            }
+            set
+            {
+                this["CurrentSongId"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double CurrentSongPosition
+        {
+            get
+            {
+                return ((double)(this["CurrentSongPosition"]));
+            }
+            set
+            {
+                this["CurrentSongPosition"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("#1DB954")]
+        public string AccentColor
+        {
+            get
+            {
+                return ((string)(this["AccentColor"]));
+            }
+            set
+            {
+                this["AccentColor"] = value;
+            }
+        }
     }
 }

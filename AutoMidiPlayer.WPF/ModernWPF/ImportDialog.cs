@@ -15,6 +15,9 @@ public class ImportDialog : ContentDialog
     private readonly System.Windows.Controls.ComboBox _keyComboBox;
     private readonly System.Windows.Controls.ComboBox _transposeComboBox;
     private readonly DatePicker _dateAddedPicker;
+    private readonly System.Windows.Controls.TextBox _bpmBox;
+    private readonly System.Windows.Controls.CheckBox _useCustomBpmCheckBox;
+    private readonly double _nativeBpm;
 
     public string SongTitle => _titleBox.Text;
     public string SongAuthor => _authorBox.Text;
@@ -23,7 +26,21 @@ public class ImportDialog : ContentDialog
     public int SongKey { get; private set; }
     public Transpose SongTranspose => MusicConstants.TransposeNames.Keys.ElementAt(_transposeComboBox.SelectedIndex);
 
-    public ImportDialog(string defaultTitle, int defaultKey = 0, Transpose defaultTranspose = Transpose.Ignore, string? defaultAuthor = null, string? defaultAlbum = null, DateTime? defaultDateAdded = null)
+    /// <summary>
+    /// Gets the custom BPM value if enabled, otherwise null (use native MIDI BPM).
+    /// </summary>
+    public double? SongBpm
+    {
+        get
+        {
+            if (_useCustomBpmCheckBox.IsChecked != true) return null;
+            if (double.TryParse(_bpmBox.Text, out var bpm) && bpm > 0 && bpm <= 999)
+                return bpm;
+            return null;
+        }
+    }
+
+    public ImportDialog(string defaultTitle, int defaultKey = 0, Transpose defaultTranspose = Transpose.Ignore, string? defaultAuthor = null, string? defaultAlbum = null, DateTime? defaultDateAdded = null, double nativeBpm = 120, double? customBpm = null)
     {
         Title = "Edit Song";
         PrimaryButtonText = "Save";
@@ -93,6 +110,49 @@ public class ImportDialog : ContentDialog
         _transposeComboBox.SelectedIndex = MusicConstants.TransposeNames.Keys.ToList().IndexOf(defaultTranspose);
         if (_transposeComboBox.SelectedIndex < 0) _transposeComboBox.SelectedIndex = 0;
         stackPanel.Children.Add(_transposeComboBox);
+
+        // BPM Section
+        _nativeBpm = nativeBpm;
+        var bpmPanel = new StackPanel { Margin = new Thickness(0, 12, 0, 0) };
+
+        // Native BPM display
+        var nativeBpmText = new TextBlock
+        {
+            Text = $"Native BPM: {nativeBpm:F1}",
+            Margin = new Thickness(0, 0, 0, 8),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136))
+        };
+        bpmPanel.Children.Add(nativeBpmText);
+
+        // Custom BPM checkbox and input
+        var bpmInputPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+        _useCustomBpmCheckBox = new System.Windows.Controls.CheckBox
+        {
+            Content = "Custom BPM:",
+            VerticalAlignment = VerticalAlignment.Center,
+            IsChecked = customBpm.HasValue,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        bpmInputPanel.Children.Add(_useCustomBpmCheckBox);
+
+        _bpmBox = new System.Windows.Controls.TextBox
+        {
+            Text = customBpm.HasValue ? customBpm.Value.ToString("F1") : nativeBpm.ToString("F1"),
+            Width = 80,
+            IsEnabled = customBpm.HasValue
+        };
+        bpmInputPanel.Children.Add(_bpmBox);
+
+        _useCustomBpmCheckBox.Checked += (_, _) => _bpmBox.IsEnabled = true;
+        _useCustomBpmCheckBox.Unchecked += (_, _) =>
+        {
+            _bpmBox.IsEnabled = false;
+            _bpmBox.Text = _nativeBpm.ToString("F1");
+        };
+
+        bpmPanel.Children.Add(bpmInputPanel);
+        stackPanel.Children.Add(bpmPanel);
 
         Content = stackPanel;
     }

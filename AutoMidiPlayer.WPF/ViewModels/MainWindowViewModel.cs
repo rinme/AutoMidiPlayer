@@ -174,5 +174,12 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
 
         // Restore queue from saved state
         QueueView.RestoreQueue(SongsView.Tracks);
+
+        // Restore previously playing song and position
+        var savedPosition = QueueView.RestoreCurrentSong(SongsView.Tracks);
+        if (savedPosition.HasValue)
+        {
+            PlayerView.SetSavedPosition(savedPosition.Value);
+        }
     }
 }

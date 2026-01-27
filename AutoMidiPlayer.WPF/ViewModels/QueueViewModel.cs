@@ -282,6 +282,69 @@ public class QueueViewModel : Screen
     }
 
     /// <summary>
+    /// Save the currently playing song ID and position
+    /// </summary>
+    public void SaveCurrentSong(double positionSeconds)
+    {
+        if (OpenedFile is not null)
+        {
+            Settings.CurrentSongId = OpenedFile.Song.Id.ToString();
+            Settings.CurrentSongPosition = positionSeconds;
+        }
+        else
+        {
+            Settings.CurrentSongId = string.Empty;
+            Settings.CurrentSongPosition = 0;
+        }
+        Settings.Save();
+    }
+
+    /// <summary>
+    /// Restore the previously playing song from saved state
+    /// Returns the position in seconds to seek to, or null if no song to restore
+    /// </summary>
+    public double? RestoreCurrentSong(IEnumerable<MidiFile> availableTracks)
+    {
+        if (string.IsNullOrEmpty(Settings.CurrentSongId)) return null;
+
+        if (!Guid.TryParse(Settings.CurrentSongId, out var savedId))
+        {
+            ClearSavedSong();
+            return null;
+        }
+
+        var track = availableTracks.FirstOrDefault(t => t.Song.Id == savedId);
+        if (track is null)
+        {
+            // Song no longer exists, clear persistence
+            ClearSavedSong();
+            return null;
+        }
+
+        // Make sure the song is in the queue
+        if (!Tracks.Contains(track))
+        {
+            Tracks.Insert(0, track);
+            RefreshQueue();
+        }
+
+        OpenedFile = track;
+        _events.Publish(track);
+
+        return Settings.CurrentSongPosition;
+    }
+
+    /// <summary>
+    /// Clear the saved song persistence
+    /// </summary>
+    public void ClearSavedSong()
+    {
+        Settings.CurrentSongId = string.Empty;
+        Settings.CurrentSongPosition = 0;
+        Settings.Save();
+    }
+
+    /// <summary>
     /// Called when queue is modified to auto-save
     /// </summary>
     public void OnQueueModified()

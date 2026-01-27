@@ -228,6 +228,27 @@
                     </modern:RadioButtons>
                 </GroupBox>
 
+                <GroupBox Header="Accent Color">
+                    <ComboBox
+                        SelectedItem="{Binding SelectedAccentColor}"
+                        ItemsSource="{x:Static viewModels:SettingsPageViewModel.AccentColors}"
+                        MinWidth="150">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="16"
+                                            Height="16"
+                                            CornerRadius="8"
+                                            Background="{Binding ColorBrush}"
+                                            Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding Name}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </GroupBox>
+
                 <GroupBox Header="Transition Style">
                     <ComboBox
                         SelectedItem="{Binding Transition}"

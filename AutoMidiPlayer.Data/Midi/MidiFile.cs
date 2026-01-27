@@ -40,6 +40,21 @@ public class MidiFile : Screen
 
     public TimeSpan Duration => Midi.GetDuration<MetricTimeSpan>();
 
+    /// <summary>
+    /// Gets the BPM from the MIDI file's tempo map. Returns the tempo at the start of the file.
+    /// </summary>
+    public double GetNativeBpm()
+    {
+        var tempoMap = Midi.GetTempoMap();
+        var tempo = tempoMap.GetTempoAtTime(new MetricTimeSpan(0));
+        return tempo.BeatsPerMinute;
+    }
+
+    /// <summary>
+    /// Gets the effective BPM - uses song's custom BPM if set, otherwise uses native MIDI BPM.
+    /// </summary>
+    public double EffectiveBpm => Song.Bpm ?? GetNativeBpm();
+
     public IEnumerable<Melanchall.DryWetMidi.Core.MidiFile> Split(uint bars, uint beats, uint ticks) =>
         Midi.SplitByGrid(new SteppedGrid(new BarBeatTicksTimeSpan(bars, beats, ticks)));
 

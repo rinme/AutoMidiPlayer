@@ -40,6 +40,8 @@ public class LyrePlayerViewModel : Screen,
     private bool _ignoreSliderChange;
     private InputDevice? _inputDevice;
     private TimeSpan _songPosition;
+    private double? _savedPosition;
+    private int _savePositionCounter;
 
     public LyrePlayerViewModel(IContainer ioc, MainWindowViewModel main)
     {
@@ -205,13 +207,27 @@ public class LyrePlayerViewModel : Screen,
         UpdateButtons();
     }
 
+    /// <summary>
+    /// Set a saved position to restore when the song starts playing
+    /// </summary>
+    public void SetSavedPosition(double positionSeconds)
+    {
+        _savedPosition = positionSeconds;
+        // Update the slider to show saved position
+        SongPosition = positionSeconds;
+    }
+
     public async Task PlayPause()
     {
         if (Playback is null)
             await InitializePlayback();
 
         if (Playback!.IsRunning)
+        {
             Playback.Stop();
+            // Save position on pause
+            Queue.SaveCurrentSong(CurrentTime.TotalSeconds);
+        }
         else
         {
             var time = new MetricTimeSpan(CurrentTime);
@@ -314,6 +330,14 @@ public class LyrePlayerViewModel : Screen,
             MoveSlider(time);
 
             UpdateButtons();
+
+            // Save position every 5 seconds (assuming ~10 ticks per second)
+            _savePositionCounter++;
+            if (_savePositionCounter >= 50)
+            {
+                _savePositionCounter = 0;
+                Queue.SaveCurrentSong(time.TotalSeconds);
+            }
         }
     }
 
@@ -440,6 +464,15 @@ public class LyrePlayerViewModel : Screen,
 
             UpdateButtons();
         };
+
+        // Restore saved position if available
+        if (_savedPosition.HasValue)
+        {
+            var time = TimeSpan.FromSeconds(_savedPosition.Value);
+            MoveSlider(time);
+            playback.MoveToTime(new MetricTimeSpan(time));
+            _savedPosition = null;
+        }
 
         UpdateButtons();
         return Task.CompletedTask;

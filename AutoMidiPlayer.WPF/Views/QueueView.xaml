@@ -69,6 +69,7 @@
                                       MinWidth="150"/>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="60"/>
+                    <ColumnDefinition Width="50"/>
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="80"/>
                     <ColumnDefinition Width="60"/>
@@ -91,14 +92,18 @@
                            Opacity="0.6"
                            FontSize="12"/>
                 <TextBlock Grid.Column="4"
-                           Text="Transpose"
+                           Text="BPM"
                            Opacity="0.6"
                            FontSize="12"/>
                 <TextBlock Grid.Column="5"
+                           Text="Transpose"
+                           Opacity="0.6"
+                           FontSize="12"/>
+                <TextBlock Grid.Column="6"
                            Text="Date Added"
                            Opacity="0.6"
                            FontSize="12"/>
-                <ui:FontIcon Grid.Column="6"
+                <ui:FontIcon Grid.Column="7"
                              Glyph="&#xE916;"
                              FontFamily="{StaticResource MdlFontFamily}"
                              FontSize="12"
@@ -129,6 +134,7 @@
                                               MinWidth="150"/>
                             <ColumnDefinition Width="100"/>
                             <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="50"/>
                             <ColumnDefinition Width="70"/>
                             <ColumnDefinition Width="80"/>
                             <ColumnDefinition Width="60"/>
@@ -148,7 +154,7 @@
                                                     <MultiBinding Converter="{x:Static modernWpf:IsPlayingToBoolConverter.Instance}">
                                                         <Binding/>
                                                         <Binding Path="DataContext.OpenedFile"
-                                                                RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                                 RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                                                     </MultiBinding>
                                                 </DataTrigger.Binding>
                                                 <Setter Property="Foreground"
@@ -183,14 +189,14 @@
                                        TextTrimming="CharacterEllipsis">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock"
-                                            BasedOn="{StaticResource BodyTextBlockStyle}">
+                                           BasedOn="{StaticResource BodyTextBlockStyle}">
                                         <Style.Triggers>
                                             <DataTrigger Value="True">
                                                 <DataTrigger.Binding>
                                                     <MultiBinding Converter="{x:Static modernWpf:IsPlayingToBoolConverter.Instance}">
                                                         <Binding/>
                                                         <Binding Path="DataContext.OpenedFile"
-                                                                RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                                 RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                                                     </MultiBinding>
                                                 </DataTrigger.Binding>
                                                 <Setter Property="Foreground"
@@ -220,21 +226,27 @@
                                    VerticalAlignment="Center"
                                    Opacity="0.7"/>
 
-                        <!-- Transpose -->
+                        <!-- BPM -->
                         <TextBlock Grid.Column="4"
+                                   Text="{Binding EffectiveBpm, StringFormat={}{0:F0}}"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.6"/>
+
+                        <!-- Transpose -->
+                        <TextBlock Grid.Column="5"
                                    Text="{Binding Song.Transpose, Converter={x:Static modernWpf:TransposeToDisplayConverter.Instance}}"
                                    ToolTip="{Binding Song.Transpose, Converter={x:Static modernWpf:TransposeToTooltipConverter.Instance}}"
                                    VerticalAlignment="Center"
                                    Opacity="0.6"/>
 
                         <!-- Date Added -->
-                        <TextBlock Grid.Column="5"
+                        <TextBlock Grid.Column="6"
                                    Text="{Binding Song.DateAdded, StringFormat={}{0:MMM d, yyyy}}"
                                    VerticalAlignment="Center"
                                    Opacity="0.6"/>
 
                         <!-- Duration -->
-                        <TextBlock Grid.Column="6"
+                        <TextBlock Grid.Column="7"
                                    Text="{Binding Duration, StringFormat=m\\:ss}"
                                    VerticalAlignment="Center"
                                    HorizontalAlignment="Right"

@@ -37,6 +37,21 @@ public class SettingsPageViewModel : Screen
     public static Dictionary<Transpose, string> TransposeNames => MusicConstants.TransposeNames;
     public static Dictionary<Transpose, string> TransposeTooltips => MusicConstants.TransposeTooltips;
 
+    // Predefined accent colors (Spotify green is first/default)
+    public static List<AccentColorOption> AccentColors { get; } = new()
+    {
+        new("Spotify Green", "#1DB954"),
+        new("Blue", "#0078D4"),
+        new("Purple", "#8B5CF6"),
+        new("Red", "#EF4444"),
+        new("Orange", "#F97316"),
+        new("Pink", "#EC4899"),
+        new("Teal", "#14B8A6"),
+        new("Yellow", "#EAB308"),
+        new("Indigo", "#6366F1"),
+        new("Cyan", "#06B6D4")
+    };
+
     private static readonly Settings Settings = Settings.Default;
     private readonly IContainer _ioc;
     private readonly IEventAggregator _events;
@@ -44,6 +59,7 @@ public class SettingsPageViewModel : Screen
     private readonly MainWindowViewModel _main;
     private int _keyOffset;
     private double _speed = 1.0;
+    private AccentColorOption _selectedAccentColor = null!;
 
     public SettingsPageViewModel(IContainer ioc, MainWindowViewModel main)
     {
@@ -60,6 +76,39 @@ public class SettingsPageViewModel : Screen
             1 => ApplicationTheme.Dark,
             _ => null
         };
+
+        // Initialize accent color from settings
+        _selectedAccentColor = AccentColors.FirstOrDefault(c => c.ColorHex == Settings.AccentColor)
+            ?? AccentColors[0]; // Default to Spotify Green
+        ApplyAccentColor(_selectedAccentColor.ColorHex);
+    }
+
+    public AccentColorOption SelectedAccentColor
+    {
+        get => _selectedAccentColor;
+        set
+        {
+            if (SetAndNotify(ref _selectedAccentColor, value) && value is not null)
+            {
+                Settings.AccentColor = value.ColorHex;
+                Settings.Save();
+                ApplyAccentColor(value.ColorHex);
+            }
+        }
+    }
+
+    private void ApplyAccentColor(string hexColor)
+    {
+        try
+        {
+            var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hexColor);
+            ThemeManager.Current.AccentColor = color;
+        }
+        catch
+        {
+            // Fallback to Spotify green if color parsing fails
+            ThemeManager.Current.AccentColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1DB954");
+        }
     }
 
     public bool AutoCheckUpdates { get; set; } = Settings.AutoCheckUpdates;
@@ -521,4 +570,21 @@ public class SettingsPageViewModel : Screen
         // Notify UI to refresh
         _main.SongsView.RefreshCurrentSong();
     }
+}
+
+public class AccentColorOption
+{
+    public string Name { get; }
+    public string ColorHex { get; }
+    public System.Windows.Media.SolidColorBrush ColorBrush { get; }
+
+    public AccentColorOption(string name, string colorHex)
+    {
+        Name = name;
+        ColorHex = colorHex;
+        ColorBrush = new System.Windows.Media.SolidColorBrush(
+            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex));
+    }
+
+    public override string ToString() => Name;
 }
