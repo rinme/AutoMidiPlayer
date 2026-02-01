@@ -82,7 +82,7 @@
                                     ItemsSource="{Binding SortedTracks}"
                                     SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                                     OpenedFile="{Binding QueueView.OpenedFile}"
-                                    IsPlaying="{Binding TrackView.IsPlaying}"
+                                    IsPlaying="{Binding Playback.IsPlaying}"
                                     AllowReorder="True"
                                     ItemDoubleClick="TrackList_ItemDoubleClick"
                                     PlayPauseClick="TrackList_PlayPauseClick"

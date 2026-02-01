@@ -22,10 +22,9 @@ public class QueueViewModel : Screen
 {
     public enum LoopMode
     {
-        Once,
-        Track,
-        Playlist,
-        All
+        Off,    // Stop when queue finishes
+        Queue,  // Loop back to first song when queue finishes
+        Track   // Loop current song
     }
 
     private static readonly Settings Settings = Settings.Default;
@@ -43,21 +42,18 @@ public class QueueViewModel : Screen
         Shuffle = Settings.QueueShuffle;
         Loop = (LoopMode)Settings.QueueLoopMode;
 
-        // Forward IsPlaying changes from TrackView so bindings update
-        _main.TrackView.PropertyChanged += OnTrackViewPropertyChanged;
+        // Forward IsPlaying changes from Playback so bindings update
+        _main.Playback.PlaybackStateChanged += HandlePlaybackStateChanged;
     }
 
-    private void OnTrackViewPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void HandlePlaybackStateChanged(object? sender, EventArgs e)
     {
-        if (e.PropertyName == nameof(TrackViewModel.IsPlaying))
+        // Notify that Playback changed so bindings to Playback.IsPlaying re-evaluate
+        // Use Dispatcher to avoid collection enumeration issues
+        System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
         {
-            // Notify that TrackView changed so bindings to TrackView.IsPlaying re-evaluate
-            // Use Dispatcher to avoid collection enumeration issues
-            System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
-            {
-                NotifyOfPropertyChange(() => TrackView);
-            });
-        }
+            NotifyOfPropertyChange(() => Playback);
+        });
     }
 
     private BindableCollection<MidiFile> _filteredTracks = new();
@@ -73,13 +69,15 @@ public class QueueViewModel : Screen
 
     public IEnumerable<string> TrackTitles => Tracks.Select(t => t.Title);
 
-    public LoopMode Loop { get; set; } = LoopMode.All;
+    public LoopMode Loop { get; set; } = LoopMode.Queue;
 
     public MidiFile? OpenedFile { get; set; }
 
     public MidiFile? SelectedFile { get; set; }
 
     public TrackViewModel TrackView => _main.TrackView;
+
+    public Services.PlaybackService Playback => _main.Playback;
 
     public SolidColorBrush ShuffleStateColor => Shuffle
         ? new(ThemeManager.Current.ActualAccentColor)
@@ -90,20 +88,18 @@ public class QueueViewModel : Screen
     public string LoopStateString =>
         Loop switch
         {
-            LoopMode.Once => "\xF5E7",
-            LoopMode.Track => "\xE8ED",
-            LoopMode.Playlist => "\xEBE7",
-            LoopMode.All => "\xE8EE",
+            LoopMode.Off => "\xF5E7",    // No repeat icon
+            LoopMode.Queue => "\xE8EE",  // Repeat all icon
+            LoopMode.Track => "\xE8ED",  // Repeat one icon
             _ => string.Empty
         };
 
     public string LoopTooltip =>
         Loop switch
         {
-            LoopMode.Once => "Loop: Off",
+            LoopMode.Off => "Loop: Off",
+            LoopMode.Queue => "Loop: Queue",
             LoopMode.Track => "Loop: Track",
-            LoopMode.Playlist => "Loop: Playlist",
-            LoopMode.All => "Loop: All",
             _ => "Loop"
         };
 
@@ -113,23 +109,35 @@ public class QueueViewModel : Screen
 
     public BindableCollection<MidiFile> GetPlaylist() => Shuffle ? ShuffledTracks : Tracks;
 
-    public MidiFile? Next()
+    /// <summary>
+    /// Get the next song to play.
+    /// </summary>
+    /// <param name="userInitiated">True if user clicked Next, false if auto-triggered by song finish</param>
+    /// <returns>The next song to play, or null if none</returns>
+    public MidiFile? Next(bool userInitiated = true)
     {
         var playlist = GetPlaylist().ToList();
         if (OpenedFile is null) return playlist.FirstOrDefault();
 
         switch (Loop)
         {
-            case LoopMode.Once:
-                return null;
+            case LoopMode.Off:
+                // Off mode: play through queue once, stop at end
+                break; // Fall through to get next song (returns null at end)
             case LoopMode.Track:
-                return OpenedFile;
+                // Track loop mode:
+                // - If song finished naturally (not user initiated), loop same song
+                // - If user clicked Next, go to next song (which will then loop when it finishes)
+                if (!userInitiated)
+                    return OpenedFile;
+                break; // Fall through to get next song
+            case LoopMode.Queue:
+                // Queue loop: wrap to first song when reaching end
+                var nextIndex = playlist.IndexOf(OpenedFile) + 1;
+                return playlist.ElementAtOrDefault(nextIndex % playlist.Count);
         }
 
         var next = playlist.IndexOf(OpenedFile) + 1;
-        if (Loop is LoopMode.All)
-            next %= playlist.Count;
-
         return playlist.ElementAtOrDefault(next);
     }
 
@@ -174,13 +182,13 @@ public class QueueViewModel : Screen
         // If this is the currently opened file, toggle play/pause
         if (OpenedFile == file)
         {
-            await TrackView.PlayPause();
+            await _main.Playback.PlayPause();
         }
         else
         {
             // Otherwise, load and play this song
             _events.Publish(file);
-            await TrackView.PlayPause();
+            await _main.Playback.PlayPause();
         }
     }
 

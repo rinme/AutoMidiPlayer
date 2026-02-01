@@ -1,22 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
-using Windows.Media;
-using Windows.Media.Playback;
 using AutoMidiPlayer.Data;
-using AutoMidiPlayer.Data.Entities;
 using AutoMidiPlayer.Data.Midi;
-using AutoMidiPlayer.Data.Notification;
 using AutoMidiPlayer.Data.Properties;
 using AutoMidiPlayer.WPF.Core;
-using AutoMidiPlayer.WPF.ModernWPF.Errors;
+using AutoMidiPlayer.WPF.Services;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
-using Melanchall.DryWetMidi.Multimedia;
-using Melanchall.DryWetMidi.Tools;
-using ModernWpf.Controls;
 using Stylet;
 using StyletIoC;
 using static AutoMidiPlayer.WPF.ViewModels.SettingsPageViewModel;
@@ -24,113 +15,47 @@ using MidiFile = AutoMidiPlayer.Data.Midi.MidiFile;
 
 namespace AutoMidiPlayer.WPF.ViewModels;
 
-public class TrackViewModel : Screen,
-    IHandle<MidiFile>, IHandle<MidiTrack>,
-    IHandle<SettingsPageViewModel>,
-    IHandle<InstrumentViewModel>,
-    IHandle<MergeNotesNotification>,
-    IHandle<PlayTimerNotification>
+/// <summary>
+/// ViewModel responsible for track list management and display.
+/// Playback controls are handled by PlaybackService.
+/// </summary>
+public class TrackViewModel : Screen
 {
+    #region Fields
+
     private static readonly Settings Settings = Settings.Default;
-    private readonly IContainer _ioc;
-    private readonly IEventAggregator _events;
     private readonly MainWindowViewModel _main;
-    private readonly MediaPlayer? _player;
-    private readonly OutputDevice? _speakers;
-    private readonly PlaybackCurrentTimeWatcher _timeWatcher;
-    private bool _ignoreSliderChange;
-    private TimeSpan _songPosition;
-    private double? _savedPosition;
-    private int _savePositionCounter;
-    private bool _isViewActive = true; // Start true since TrackView is the initial tab
+    private bool _isViewActive = true;
+
+    #endregion
+
+    #region Constructor
 
     public TrackViewModel(IContainer ioc, MainWindowViewModel main)
     {
-        _ioc = ioc;
         _main = main;
-        _timeWatcher = PlaybackCurrentTimeWatcher.Instance;
 
-        _events = ioc.Get<IEventAggregator>();
-        _events.Subscribe(this);
-
-        _timeWatcher.CurrentTimeChanged += OnSongTick;
-
-        // SystemMediaTransportControls is only supported on Windows 10 and later
-        // https://docs.microsoft.com/en-us/uwp/api/windows.media.systemmediatransportcontrols
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
-            Environment.OSVersion.Version.Major >= 10)
-        {
-            _player = ioc.Get<MediaPlayer>();
-
-            _player!.CommandManager.NextReceived += (_, _) => Next();
-            _player!.CommandManager.PreviousReceived += (_, _) => Previous();
-
-            _player!.CommandManager.PlayReceived += async (_, _) => await PlayPause();
-            _player!.CommandManager.PauseReceived += async (_, _) => await PlayPause();
-        }
-
-        try
-        {
-            _speakers = OutputDevice.GetByName("Microsoft GS Wavetable Synth");
-        }
-        catch (ArgumentException e)
-        {
-            new ErrorContentDialog(e, closeText: "Ignore").ShowAsync();
-
-            // Note: CanUseSpeakers will be set in InstrumentViewModel
-            Settings.UseSpeakers = false;
-        }
+        // Subscribe to note played events from PlaybackService
+        main.Playback.NotePlayed += OnNotePlayed;
     }
+
+    #endregion
+
+    #region Properties - Track List
 
     public BindableCollection<MidiTrack> MidiTracks { get; } = new();
 
-    public bool CanHitNext
-    {
-        get
-        {
-            if (Queue.Loop is not QueueViewModel.LoopMode.Playlist)
-                return true;
+    #endregion
 
-            var last = Queue.GetPlaylist().LastOrDefault();
-            return Queue.OpenedFile != last;
-        }
-    }
+    #region Properties - Delegate to PlaybackService
 
-    public bool CanHitPlayPause
-    {
-        get
-        {
-            var hasNotes = MidiTracks
-                .Where(t => t.IsChecked)
-                .Any(t => t.CanBePlayed);
-
-            return Playback is not null
-                && hasNotes
-                && MaximumTime > TimeSpan.Zero;
-        }
-    }
-
-    public bool CanHitPrevious => CurrentTime > TimeSpan.FromSeconds(3) || Queue.History.Count > 1;
-
-    public double SongPosition
-    {
-        get => _songPosition.TotalSeconds;
-        set => SetAndNotify(ref _songPosition, TimeSpan.FromSeconds(value));
-    }
-
-    public Playback? Playback { get; private set; }
+    public PlaybackService Playback => _main.Playback;
 
     public QueueViewModel Queue => _main.QueueView;
 
-    public bool IsPlaying => Playback?.IsRunning ?? false;
+    #endregion
 
-    public string PlayPauseIcon => Playback?.IsRunning ?? false ? PauseIcon : PlayIcon;
-
-    public string PlayPauseTooltip => Playback?.IsRunning ?? false ? "Pause" : "Play";
-
-    public TimeSpan CurrentTime => _songPosition;
-
-    public TimeSpan MaximumTime => Queue.OpenedFile?.Duration ?? TimeSpan.Zero;
+    #region Properties - Note Statistics
 
     /// <summary>
     /// Total number of notes across all enabled tracks
@@ -156,7 +81,6 @@ public class TrackViewModel : Screen,
                 {
                     var noteId = note.NoteNumber - keyOffset;
 
-                    // If transpose is set, check if the note can be transposed to fit
                     if (Settings.TransposeNotes && transpose is not null)
                     {
                         var transposed = LyrePlayer.TransposeNote(instrument, ref noteId, transpose.Value);
@@ -175,19 +99,17 @@ public class TrackViewModel : Screen,
         ? $"{AccessibleNotes:N0} / {TotalNotes:N0} notes playable ({(double)AccessibleNotes / TotalNotes * 100:F1}%)"
         : "No notes";
 
-    private MusicDisplayProperties? Display =>
-        _player?.SystemMediaTransportControls.DisplayUpdater.MusicProperties;
+    #endregion
+
+    #region Properties - Private Helpers
 
     private SettingsPageViewModel SettingsPage => _main.SettingsView;
 
     private InstrumentViewModel InstrumentPage => _main.InstrumentView;
 
-    private static string PauseIcon => "\xEDB4";
+    #endregion
 
-    private static string PlayIcon => "\xF5B0";
-
-    private SystemMediaTransportControls? Controls =>
-        _player?.SystemMediaTransportControls;
+    #region View Lifecycle
 
     protected override void OnActivate()
     {
@@ -213,7 +135,6 @@ public class TrackViewModel : Screen,
             base.OnDeactivate();
             _isViewActive = false;
 
-            // Stop all glow effects when leaving the view
             foreach (var track in MidiTracks)
             {
                 track.StopGlow();
@@ -227,136 +148,42 @@ public class TrackViewModel : Screen,
         }
     }
 
-    public async void Handle(MergeNotesNotification message)
+    #endregion
+
+    #region Track Management
+
+    /// <summary>
+    /// Initialize tracks from the currently opened file
+    /// </summary>
+    public void InitializeTracks()
     {
-        // Save current playback state before reinitializing
-        var wasPlaying = Playback?.IsRunning ?? false;
+        if (Queue.OpenedFile?.Midi is null)
+            return;
 
-        // Use _savedPosition so it's restored INSIDE InitializePlayback before UpdateButtons()
-        _savedPosition = _songPosition.TotalSeconds;
-
-        if (!message.Merge)
+        var disabledIndices = new HashSet<int>();
+        if (!string.IsNullOrEmpty(Queue.OpenedFile.Song.DisabledTracks))
         {
-            Queue.OpenedFile?.InitializeMidi();
-            InitializeTracks();
+            foreach (var indexStr in Queue.OpenedFile.Song.DisabledTracks.Split(','))
+            {
+                if (int.TryParse(indexStr.Trim(), out var index))
+                    disabledIndices.Add(index);
+            }
         }
 
-        await InitializePlayback();
-
-        // Resume playback if was playing
-        if (wasPlaying && Playback is not null)
+        MidiTracks.Clear();
+        var trackChunks = Queue.OpenedFile.Midi.GetTrackChunks().ToList();
+        var events = _main.Ioc.Get<IEventAggregator>();
+        for (var i = 0; i < trackChunks.Count; i++)
         {
-            Playback.Start();
+            var isChecked = !disabledIndices.Contains(i);
+            MidiTracks.Add(new MidiTrack(events, trackChunks[i], i, isChecked));
         }
-    }
-
-    public async void Handle(MidiFile file)
-    {
-        CloseFile();
-        Queue.OpenedFile = file;
-        Queue.History.Push(file);
-
-        // Re-read the MIDI file from disk to restore all tracks
-        // (InitializePlayback modifies the in-memory MIDI by removing unchecked tracks)
-        file.InitializeMidi();
-        InitializeTracks();
-
-        // Update playable notes for each track based on current settings
-        UpdateTrackPlayableNotes();
-
-        await InitializePlayback();
-
-        // Update note statistics for new file
-        NotifyOfPropertyChange(() => TotalNotes);
-        NotifyOfPropertyChange(() => AccessibleNotes);
-        NotifyOfPropertyChange(() => NotesStatsDisplay);
-    }
-
-    public async void Handle(MidiTrack track)
-    {
-        // Save disabled tracks state to song
-        if (Queue.OpenedFile is not null)
-        {
-            var disabledIndices = MidiTracks
-                .Where(t => !t.IsChecked)
-                .Select(t => t.Index);
-            Queue.OpenedFile.Song.DisabledTracks = string.Join(",", disabledIndices);
-
-            // Save directly to database
-            await using var db = _ioc.Get<LyreContext>();
-            db.Songs.Update(Queue.OpenedFile.Song);
-            await db.SaveChangesAsync();
-        }
-
-        // Update note statistics
-        NotifyOfPropertyChange(() => TotalNotes);
-        NotifyOfPropertyChange(() => AccessibleNotes);
-        NotifyOfPropertyChange(() => NotesStatsDisplay);
-
-        // Save current playback state before reinitializing
-        var wasPlaying = Playback?.IsRunning ?? false;
-
-        // Use _savedPosition so it's restored INSIDE InitializePlayback before UpdateButtons()
-        // This prevents the WPF slider from resetting when Maximum binding updates
-        _savedPosition = _songPosition.TotalSeconds;
-
-        await InitializePlayback();
-
-        // Resume playback if was playing
-        if (wasPlaying && Playback is not null)
-        {
-            Playback.Start();
-        }
-    }
-
-    public async void Handle(PlayTimerNotification message)
-    {
-        if (!(Playback?.IsRunning ?? false) && CanHitPlayPause) await PlayPause();
-    }
-
-    public async void Handle(SettingsPageViewModel message)
-    {
-        // Update playable notes for each track
-        UpdateTrackPlayableNotes();
-
-        // Update note statistics when settings change
-        NotifyOfPropertyChange(() => TotalNotes);
-        NotifyOfPropertyChange(() => AccessibleNotes);
-        NotifyOfPropertyChange(() => NotesStatsDisplay);
-
-        // Save current playback state before reinitializing
-        var wasPlaying = Playback?.IsRunning ?? false;
-
-        // Use _savedPosition so it's restored INSIDE InitializePlayback before UpdateButtons()
-        _savedPosition = _songPosition.TotalSeconds;
-
-        await InitializePlayback();
-
-        // Resume playback if was playing
-        if (wasPlaying && Playback is not null)
-        {
-            Playback.Start();
-        }
-    }
-
-    public void Handle(InstrumentViewModel message)
-    {
-        // Skip if called during initialization before InstrumentView is assigned
-        if (_main.InstrumentView is null) return;
-
-        // Update playable notes for each track
-        UpdateTrackPlayableNotes();
-
-        // Update note statistics when instrument settings change
-        NotifyOfPropertyChange(() => TotalNotes);
-        NotifyOfPropertyChange(() => AccessibleNotes);
-        NotifyOfPropertyChange(() => NotesStatsDisplay);
     }
 
     /// <summary>
     /// Updates playable notes count for all tracks based on current settings
     /// </summary>
-    private void UpdateTrackPlayableNotes()
+    public void UpdateTrackPlayableNotes()
     {
         var instrument = InstrumentPage.SelectedInstrument.Key;
         var keyOffset = SettingsPage.KeyOffset;
@@ -379,415 +206,35 @@ public class TrackViewModel : Screen,
         }
     }
 
+    /// <summary>
+    /// Notify UI that note statistics have changed
+    /// </summary>
+    public void NotifyNoteStatsChanged()
+    {
+        NotifyOfPropertyChange(() => TotalNotes);
+        NotifyOfPropertyChange(() => AccessibleNotes);
+        NotifyOfPropertyChange(() => NotesStatsDisplay);
+    }
+
     public void OpenFile()
     {
-        // Note: OpenFile has been removed from QueueViewModel
-        // Songs should be added via SongsView instead
-        UpdateButtons();
+        Playback.UpdateButtons();
     }
 
-    /// <summary>
-    /// Set a saved position to restore when the song starts playing
-    /// </summary>
-    public void SetSavedPosition(double positionSeconds)
+    #endregion
+
+    #region Note Glow Effects
+
+    private void OnNotePlayed(object? sender, NotePlayedEventArgs e)
     {
-        _savedPosition = positionSeconds;
-        // Update the slider to show saved position
-        SongPosition = positionSeconds;
-    }
+        if (!_isViewActive) return;
 
-    public async Task PlayPause()
-    {
-        if (Playback is null)
-            await InitializePlayback();
-
-        // If still null (no file opened), do nothing
-        if (Playback is null)
-            return;
-
-        if (Playback.IsRunning)
+        var matchingTracks = MidiTracks.Where(t => t.IsChecked && t.ContainsNote(e.NoteNumber)).ToList();
+        foreach (var track in matchingTracks)
         {
-            Playback.Stop();
-            // Save position on pause
-            Queue.SaveCurrentSong(CurrentTime.TotalSeconds);
-        }
-        else
-        {
-            var time = new MetricTimeSpan(CurrentTime);
-            Playback.PlaybackStart = time;
-            Playback.MoveToTime(time);
-
-            if (Settings.UseSpeakers)
-                Playback.Start();
-            else
-            {
-                WindowHelper.EnsureGameOnTop();
-                await Task.Delay(100);
-
-                if (WindowHelper.IsGameFocused())
-                {
-                    Playback.PlaybackStart = Playback.GetCurrentTime(TimeSpanType.Midi);
-                    Playback.Start();
-                }
-            }
+            track.TriggerGlow();
         }
     }
 
-    public void CloseFile()
-    {
-        if (Playback != null)
-        {
-            _timeWatcher.RemovePlayback(Playback);
-
-            Playback.Stop();
-            Playback.Dispose();
-        }
-
-        MidiTracks.Clear();
-        MoveSlider(TimeSpan.Zero);
-
-        Playback = null;
-        Queue.OpenedFile = null;
-        SettingsPage.Transpose = null;
-    }
-
-    public async void Next()
-    {
-        var next = Queue.Next();
-        if (next is null)
-        {
-            if (Playback is not null)
-            {
-                Playback.PlaybackStart = null;
-                Playback.MoveToStart();
-            }
-
-            MoveSlider(TimeSpan.Zero);
-            return;
-        }
-
-        Handle(next);
-
-        if (Playback is not null)
-            await PlayPause();
-    }
-
-    public void OnSongPositionChanged()
-    {
-        NotifyOfPropertyChange(() => CurrentTime);
-
-        if (Playback is null) Next();
-
-        if (!_ignoreSliderChange && Playback is not null)
-        {
-            var isRunning = Playback.IsRunning;
-            Playback.Stop();
-            Playback.MoveToTime(new MetricTimeSpan(_songPosition));
-
-            if (Settings.UseSpeakers && isRunning)
-                Playback.Start();
-        }
-
-        _ignoreSliderChange = false;
-    }
-
-    public void OnSongTick(object? sender, PlaybackCurrentTimeChangedEventArgs e)
-    {
-        foreach (var playbackTime in e.Times)
-        {
-            TimeSpan time = (MetricTimeSpan)playbackTime.Time;
-            MoveSlider(time);
-
-            UpdateButtons();
-
-            // Save position every 5 seconds (assuming ~10 ticks per second)
-            _savePositionCounter++;
-            if (_savePositionCounter >= 50)
-            {
-                _savePositionCounter = 0;
-                Queue.SaveCurrentSong(time.TotalSeconds);
-            }
-        }
-    }
-
-    public void Previous()
-    {
-        if (CurrentTime > TimeSpan.FromSeconds(3))
-        {
-            Playback?.Stop();
-            Playback?.MoveToStart();
-
-            MoveSlider(TimeSpan.Zero);
-            Playback?.Start();
-        }
-        else
-            Queue.Previous();
-    }
-
-    public void UpdateButtons()
-    {
-        // Ensure we're on the UI thread to avoid collection enumeration issues
-        if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() == false)
-        {
-            System.Windows.Application.Current.Dispatcher.BeginInvoke(UpdateButtons);
-            return;
-        }
-
-        NotifyOfPropertyChange(() => CanHitNext);
-        NotifyOfPropertyChange(() => CanHitPrevious);
-        NotifyOfPropertyChange(() => CanHitPlayPause);
-
-        NotifyOfPropertyChange(() => IsPlaying);
-        NotifyOfPropertyChange(() => PlayPauseIcon);
-        NotifyOfPropertyChange(() => PlayPauseTooltip);
-        NotifyOfPropertyChange(() => MaximumTime);
-        NotifyOfPropertyChange(() => CurrentTime);
-
-        // Update window title based on playback state
-        _main.UpdateTitle();
-
-        if (Controls is not null && Display is not null)
-        {
-            Controls.IsPlayEnabled = CanHitPlayPause;
-            Controls.IsPauseEnabled = CanHitPlayPause;
-
-            Controls.IsNextEnabled = CanHitNext;
-            Controls.IsPreviousEnabled = CanHitPrevious;
-
-            Controls.PlaybackStatus =
-                Queue.OpenedFile is null ? MediaPlaybackStatus.Closed :
-                Playback is null ? MediaPlaybackStatus.Stopped :
-                Playback.IsRunning ? MediaPlaybackStatus.Playing :
-                MediaPlaybackStatus.Paused;
-
-            var file = Queue.OpenedFile;
-            if (file is not null)
-            {
-                var position = $"{file.Position}/{Queue.GetPlaylist().Count}";
-
-                Display.Title = file.Title;
-                Display.Artist = $"Playing {position} {CurrentTime:mm\\:ss}";
-            }
-
-            Controls.DisplayUpdater.Update();
-        }
-    }
-
-    private int ApplyNoteSettings(Keyboard.Instrument instrument, int noteId)
-    {
-        noteId -= Queue.OpenedFile?.Song.Key ?? SettingsPage.KeyOffset;
-        return Settings.TransposeNotes && SettingsPage.Transpose is not null
-            ? LyrePlayer.TransposeNote(instrument, ref noteId, SettingsPage.Transpose.Value.Key)
-            : noteId;
-    }
-
-    private Task InitializePlayback()
-    {
-        Playback?.Stop();
-        Playback?.Dispose();
-
-        if (Queue.OpenedFile is null)
-            return Task.CompletedTask;
-
-        var midi = Queue.OpenedFile.Midi;
-
-        // Use the original tempo map stored when the file was loaded
-        // This preserves BPM/tempo regardless of which tracks are enabled
-        var tempoMap = Queue.OpenedFile.OriginalTempoMap;
-
-        // Get only the checked tracks for playback
-        var tracksToPlay = MidiTracks
-            .Where(t => t.IsChecked)
-            .Select(t => t.Track)
-            .ToList();
-
-        // Use per-song merge settings - defaults to OFF when not set
-        var useMergeNotes = Queue.OpenedFile.Song.MergeNotes ?? false;
-        var mergeMilliseconds = Queue.OpenedFile.Song.MergeMilliseconds ?? 100;
-
-        if (useMergeNotes && tracksToPlay.Count > 0)
-        {
-            // Create a temporary MIDI file for merging
-            midi.Chunks.Clear();
-            midi.Chunks.AddRange(tracksToPlay);
-            midi.MergeObjects(ObjectType.Note, new()
-            {
-                VelocityMergingPolicy = VelocityMergingPolicy.Average,
-                Tolerance = new MetricTimeSpan(0, 0, 0, (int)mergeMilliseconds)
-            });
-            tracksToPlay = midi.GetTrackChunks().ToList();
-        }
-
-        // Transpose setting is now handled per-song in the import dialog
-        // The song's transpose setting (defaulting to Ignore) will be used
-
-        // Skip playback creation if no tracks to play
-        if (tracksToPlay.Count == 0)
-        {
-            Playback = null;
-            UpdateButtons();
-            return Task.CompletedTask;
-        }
-
-        // Use GetPlayback with track chunks and original tempo map to maintain consistent BPM
-        var playback = tracksToPlay.GetPlayback(tempoMap);
-
-        Playback = playback;
-        playback.Speed = SettingsPage.Speed;
-        playback.InterruptNotesOnStop = true;
-        playback.Finished += (_, _) => { Next(); };
-        playback.EventPlayed += OnNoteEvent;
-
-        playback.Started += (_, _) =>
-        {
-            _timeWatcher.RemoveAllPlaybacks();
-            _timeWatcher.AddPlayback(playback, TimeSpanType.Metric);
-            _timeWatcher.Start();
-
-            UpdateButtons();
-        };
-
-        playback.Stopped += (_, _) =>
-        {
-            _timeWatcher.Stop();
-
-            UpdateButtons();
-        };
-
-        // Restore saved position if available
-        if (_savedPosition.HasValue)
-        {
-            var time = TimeSpan.FromSeconds(_savedPosition.Value);
-            // Guard against empty playback (no timed events)
-            try
-            {
-                playback.MoveToTime(new MetricTimeSpan(time));
-            }
-            catch (InvalidOperationException)
-            {
-                // Enumeration already finished - playback has no events, ignore
-            }
-            _savedPosition = null;
-
-            // Move slider AFTER UpdateButtons to avoid WPF binding interference
-            UpdateButtons();
-            MoveSlider(time);
-            return Task.CompletedTask;
-        }
-
-        UpdateButtons();
-        return Task.CompletedTask;
-    }
-
-    private void InitializeTracks()
-    {
-        if (Queue.OpenedFile?.Midi is null)
-            return;
-
-        // Get disabled track indices from song
-        var disabledIndices = new HashSet<int>();
-        if (!string.IsNullOrEmpty(Queue.OpenedFile.Song.DisabledTracks))
-        {
-            foreach (var indexStr in Queue.OpenedFile.Song.DisabledTracks.Split(','))
-            {
-                if (int.TryParse(indexStr.Trim(), out var index))
-                    disabledIndices.Add(index);
-            }
-        }
-
-        MidiTracks.Clear();
-        var trackChunks = Queue.OpenedFile.Midi.GetTrackChunks().ToList();
-        for (var i = 0; i < trackChunks.Count; i++)
-        {
-            var isChecked = !disabledIndices.Contains(i);
-            MidiTracks.Add(new MidiTrack(_events, trackChunks[i], i, isChecked));
-        }
-    }
-
-    private void MoveSlider(TimeSpan value)
-    {
-        // Ensure we're on the UI thread
-        if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() == false)
-        {
-            System.Windows.Application.Current.Dispatcher.BeginInvoke(() => MoveSlider(value));
-            return;
-        }
-
-        _ignoreSliderChange = true;
-        SongPosition = value.TotalSeconds;
-    }
-
-    private void OnNoteEvent(object? sender, MidiEventPlayedEventArgs e)
-    {
-        if (e.Event is not NoteEvent noteEvent)
-            return;
-
-        PlayNote(noteEvent);
-    }
-
-    private void OnNoteEvent(object? sender, MidiEventReceivedEventArgs e)
-    {
-        if (e.Event is not NoteEvent noteEvent)
-            return;
-
-        PlayNote(noteEvent);
-    }
-
-    private void PlayNote(NoteEvent noteEvent)
-    {
-        try
-        {
-            var layout = InstrumentPage.SelectedLayout.Key;
-            var instrument = InstrumentPage.SelectedInstrument.Key;
-            var note = ApplyNoteSettings(instrument, noteEvent.NoteNumber);
-
-            // Trigger glow effect on tracks containing this note (only for NoteOn and when view is active)
-            if (noteEvent.EventType == MidiEventType.NoteOn && noteEvent.Velocity > 0)
-            {
-                var matchingTracks = MidiTracks.Where(t => t.IsChecked && t.ContainsNote(noteEvent.NoteNumber)).ToList();
-                if (_isViewActive && matchingTracks.Count > 0)
-                {
-                    foreach (var track in matchingTracks)
-                    {
-                        track.TriggerGlow();
-                    }
-                }
-            }
-
-            if (Settings.UseSpeakers)
-            {
-                noteEvent.NoteNumber = new((byte)note);
-                _speakers?.SendEvent(noteEvent);
-                return;
-            }
-
-            if (!WindowHelper.IsGameFocused())
-            {
-                Playback?.Stop();
-                return;
-            }
-
-            // Use per-song hold notes setting - defaults to OFF when not set
-            var useHoldNotes = Queue.OpenedFile?.Song.HoldNotes ?? false;
-
-            switch (noteEvent.EventType)
-            {
-                case MidiEventType.NoteOff:
-                    LyrePlayer.NoteUp(note, layout, instrument);
-                    break;
-                case MidiEventType.NoteOn when noteEvent.Velocity <= 0:
-                    return;
-                case MidiEventType.NoteOn when useHoldNotes:
-                    LyrePlayer.NoteDown(note, layout, instrument);
-                    break;
-                case MidiEventType.NoteOn:
-                    LyrePlayer.PlayNote(note, layout, instrument);
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            CrashLogger.LogException(ex);
-        }
-    }
+    #endregion
 }

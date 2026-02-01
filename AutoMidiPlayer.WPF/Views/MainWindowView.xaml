@@ -208,9 +208,9 @@
 										 Foreground="{Binding TrackView.Queue.ShuffleStateColor}"/>
 						</Button>
 
-						<Button s:View.ActionTarget="{Binding TrackView}"
+						<Button s:View.ActionTarget="{Binding Playback}"
 								Command="{s:Action Previous}"
-								IsHitTestVisible="{Binding TrackView.CanHitPrevious}"
+								IsHitTestVisible="{Binding Playback.CanHitPrevious}"
 								Style="{StaticResource PlayerControlButton}"
 								ToolTip="Previous">
 							<ui:FontIcon Glyph="&#xE892;"
@@ -218,20 +218,20 @@
 										 FontSize="16"/>
 						</Button>
 
-						<Button s:View.ActionTarget="{Binding TrackView}"
+						<Button s:View.ActionTarget="{Binding Playback}"
 								Command="{s:Action PlayPause}"
-								IsHitTestVisible="{Binding TrackView.CanHitPlayPause}"
+								IsHitTestVisible="{Binding Playback.CanHitPlayPause}"
 								Style="{StaticResource PlayPauseButton}"
-								ToolTip="{Binding TrackView.PlayPauseTooltip}">
-							<ui:FontIcon Glyph="{Binding TrackView.PlayPauseIcon}"
+								ToolTip="{Binding Playback.PlayPauseTooltip}">
+							<ui:FontIcon Glyph="{Binding Playback.PlayPauseIcon}"
 										 FontFamily="{StaticResource MdlFontFamily}"
 										 FontSize="16"
 										 Foreground="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
 						</Button>
 
-						<Button s:View.ActionTarget="{Binding TrackView}"
+						<Button s:View.ActionTarget="{Binding Playback}"
 								Command="{s:Action Next}"
-								IsHitTestVisible="{Binding TrackView.CanHitNext}"
+								IsHitTestVisible="{Binding Playback.CanHitNext}"
 								Style="{StaticResource PlayerControlButton}"
 								ToolTip="Next">
 							<ui:FontIcon Glyph="&#xE893;"
@@ -262,21 +262,21 @@
 								   VerticalAlignment="Center"
 								   FontSize="11"
 								   Opacity="0.7"
-								   Text="{Binding TrackView.CurrentTime, StringFormat=m\\:ss}"/>
+								   Text="{Binding Playback.CurrentTime, StringFormat=m\\:ss}"/>
 						<Slider Grid.Column="1"
 								Margin="8,0"
 								IsMoveToPointEnabled="True"
-								IsEnabled="{Binding TrackView.CanHitPlayPause}"
-								Value="{Binding TrackView.SongPosition}"
-								Maximum="{Binding TrackView.MaximumTime.TotalSeconds}"
+								IsEnabled="{Binding Playback.CanHitPlayPause}"
+								Value="{Binding Playback.SongPosition}"
+								Maximum="{Binding Playback.MaximumTime.TotalSeconds}"
 								IsSelectionRangeEnabled="True"
 								SelectionStart="0"
-								SelectionEnd="{Binding TrackView.SongPosition, Mode=OneWay}"/>
+								SelectionEnd="{Binding Playback.SongPosition, Mode=OneWay}"/>
 						<TextBlock Grid.Column="2"
 								   VerticalAlignment="Center"
 								   FontSize="11"
 								   Opacity="0.7"
-								   Text="{Binding TrackView.MaximumTime, StringFormat=m\\:ss}"/>
+								   Text="{Binding Playback.MaximumTime, StringFormat=m\\:ss}"/>
 					</Grid>
 				</StackPanel>
 

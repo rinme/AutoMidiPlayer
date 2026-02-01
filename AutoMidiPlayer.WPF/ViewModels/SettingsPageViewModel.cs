@@ -77,7 +77,8 @@ public class SettingsPageViewModel : Screen
         _theme = ioc.Get<IThemeService>();
         _main = main;
 
-        _keyOffset = Queue.OpenedFile?.Song.Key ?? 0;
+        // Defer key offset initialization - QueueView may not exist yet
+        _keyOffset = 0;
 
         // Initialize theme from settings
         _selectedTheme = Settings.AppTheme switch

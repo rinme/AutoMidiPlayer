@@ -2,6 +2,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using AutoMidiPlayer.Data;
+using AutoMidiPlayer.WPF.Services;
 using AutoMidiPlayer.WPF.Views;
 using JetBrains.Annotations;
 using ModernWpf;
@@ -21,7 +22,6 @@ namespace AutoMidiPlayer.WPF.ViewModels;
 public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
 {
     public static NavigationStore Navigation = null!;
-    private readonly IContainer _ioc;
     private readonly IThemeService _theme;
     private readonly IEventAggregator _events;
 
@@ -32,19 +32,31 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     {
         Title = AppName;
 
-        _ioc = ioc;
+        Ioc = ioc;
         _theme = theme;
         _events = ioc.Get<IEventAggregator>();
         _events.Subscribe(this);
 
-        // TrackView must be initialized first as other ViewModels depend on it
+        // Initialize services FIRST - ViewModels depend on these
+        // PlaybackService handles all playback logic
+        Playback = new PlaybackService(ioc, this);
+        
+        // Initialize ViewModels - order matters for dependencies
+        SettingsView = new(ioc, this);
+        InstrumentView = new(ioc, this);
+        
+        // TrackView only handles track list management
         ActiveItem = TrackView = new(ioc, this);
+        
+        // QueueView and SongsView depend on Playback being initialized
         QueueView = new(ioc, this);
         SongsView = new(ioc, this);
-        SettingsView = new(ioc, this);
         PianoSheetView = new(this);
-        InstrumentView = new(ioc, this);
     }
+
+    public IContainer Ioc { get; }
+
+    public PlaybackService Playback { get; }
 
     public void Handle(MidiFile message)
     {
@@ -55,7 +67,7 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     public void UpdateTitle()
     {
         // Only show song title when actively playing, not when paused or stopped
-        Title = TrackView.IsPlaying && QueueView.OpenedFile is not null
+        Title = Playback.IsPlaying && QueueView.OpenedFile is not null
             ? $"{QueueView.OpenedFile.Title} - {AppName}"
             : AppName;
     }
@@ -168,7 +180,7 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
         }
 
         // Load songs from database into Songs library
-        await using var db = _ioc.Get<LyreContext>();
+        await using var db = Ioc.Get<LyreContext>();
         await SongsView.AddFiles(db.Songs);
 
         // Auto-scan MIDI folder if configured
@@ -184,7 +196,7 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
         var savedPosition = QueueView.RestoreCurrentSong(SongsView.Tracks);
         if (savedPosition.HasValue)
         {
-            TrackView.SetSavedPosition(savedPosition.Value);
+            Playback.SetSavedPosition(savedPosition.Value);
         }
     }
 }

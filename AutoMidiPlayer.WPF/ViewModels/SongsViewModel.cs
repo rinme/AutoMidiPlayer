@@ -43,26 +43,25 @@ public class SongsViewModel : Screen
         CurrentSortMode = (SortMode)Settings.SongsSortMode;
         IsAscending = Settings.SongsSortAscending;
 
-        // Forward IsPlaying changes from TrackView so bindings update
-        _main.TrackView.PropertyChanged += OnTrackViewPropertyChanged;
+        // Forward IsPlaying changes from Playback so bindings update
+        _main.Playback.PlaybackStateChanged += HandlePlaybackStateChanged;
     }
 
-    private void OnTrackViewPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void HandlePlaybackStateChanged(object? sender, EventArgs e)
     {
-        if (e.PropertyName == nameof(TrackViewModel.IsPlaying))
+        // Notify that Playback changed so bindings to Playback.IsPlaying re-evaluate
+        // Use Dispatcher to avoid collection enumeration issues
+        System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
         {
-            // Notify that TrackView changed so bindings to TrackView.IsPlaying re-evaluate
-            // Use Dispatcher to avoid collection enumeration issues
-            System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
-            {
-                NotifyOfPropertyChange(() => TrackView);
-            });
-        }
+            NotifyOfPropertyChange(() => Playback);
+        });
     }
 
     public QueueViewModel QueueView => _main.QueueView;
 
     public TrackViewModel TrackView => _main.TrackView;
+
+    public Services.PlaybackService Playback => _main.Playback;
 
     public BindableCollection<MidiFile> Tracks { get; } = new();
 
@@ -448,13 +447,13 @@ public class SongsViewModel : Screen
         // If this is the currently opened file, toggle play/pause
         if (QueueView.OpenedFile == file)
         {
-            await TrackView.PlayPause();
+            await _main.Playback.PlayPause();
         }
         else
         {
             // Otherwise, add to queue and play this song
             PlaySong(file);
-            await TrackView.PlayPause();
+            await _main.Playback.PlayPause();
         }
     }
 

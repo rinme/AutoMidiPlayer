@@ -59,7 +59,7 @@
                                     ItemsSource="{Binding FilteredTracks}"
                                     SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                                     OpenedFile="{Binding OpenedFile}"
-                                    IsPlaying="{Binding TrackView.IsPlaying}"
+                                    IsPlaying="{Binding Playback.IsPlaying}"
                                     AllowReorder="True"
                                     ItemDoubleClick="TrackList_ItemDoubleClick"
                                     PlayPauseClick="TrackList_PlayPauseClick"

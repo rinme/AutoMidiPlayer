@@ -149,6 +149,7 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
     private async void OnMergeNotesChanged()
     {
         if (_isUpdatingFromSong) return;
+        if (_main.QueueView is null) return;
 
         var song = _main.QueueView.OpenedFile?.Song;
         if (song != null)
@@ -163,6 +164,7 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
     private async void OnMergeMillisecondsChanged()
     {
         if (_isUpdatingFromSong) return;
+        if (_main.QueueView is null) return;
 
         var song = _main.QueueView.OpenedFile?.Song;
         if (song != null)
@@ -177,6 +179,7 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
     private async void OnHoldNotesChanged()
     {
         if (_isUpdatingFromSong) return;
+        if (_main.QueueView is null) return;
 
         var song = _main.QueueView.OpenedFile?.Song;
         if (song != null)
