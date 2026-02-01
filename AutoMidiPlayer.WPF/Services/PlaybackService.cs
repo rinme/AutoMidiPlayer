@@ -502,7 +502,7 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
         }
 
         _main.UpdateTitle();
-        
+
         // Notify UI of property changes
         NotifyOfPropertyChange(nameof(IsPlaying));
         NotifyOfPropertyChange(nameof(PlayPauseIcon));
@@ -510,7 +510,7 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
         NotifyOfPropertyChange(nameof(CanHitPlayPause));
         NotifyOfPropertyChange(nameof(CanHitNext));
         NotifyOfPropertyChange(nameof(CanHitPrevious));
-        
+
         PlaybackStateChanged?.Invoke(this, EventArgs.Empty);
 
         if (Controls is not null && Display is not null)

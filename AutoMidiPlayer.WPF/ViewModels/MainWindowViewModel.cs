@@ -2,6 +2,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using AutoMidiPlayer.Data;
+using AutoMidiPlayer.Data.Properties;
 using AutoMidiPlayer.WPF.Services;
 using AutoMidiPlayer.WPF.Views;
 using JetBrains.Annotations;
@@ -24,6 +25,7 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     public static NavigationStore Navigation = null!;
     private readonly IThemeService _theme;
     private readonly IEventAggregator _events;
+    private static readonly Settings Settings = Settings.Default;
 
     private static readonly string AppName = $"Auto MIDI Player {SettingsPageViewModel.ProgramVersion}";
     private static readonly string[] MidiExtensions = { ".mid", ".midi" };
@@ -40,14 +42,14 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
         // Initialize services FIRST - ViewModels depend on these
         // PlaybackService handles all playback logic
         Playback = new PlaybackService(ioc, this);
-        
+
         // Initialize ViewModels - order matters for dependencies
         SettingsView = new(ioc, this);
         InstrumentView = new(ioc, this);
-        
+
         // TrackView only handles track list management
         ActiveItem = TrackView = new(ioc, this);
-        
+
         // QueueView and SongsView depend on Playback being initialized
         QueueView = new(ioc, this);
         SongsView = new(ioc, this);
@@ -67,9 +69,16 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     public void UpdateTitle()
     {
         // Only show song title when actively playing, not when paused or stopped
-        Title = Playback.IsPlaying && QueueView.OpenedFile is not null
-            ? $"{QueueView.OpenedFile.Title} - {AppName}"
-            : AppName;
+        if (Playback.IsPlaying && QueueView.OpenedFile is not null)
+        {
+            var title = QueueView.OpenedFile.Title;
+            var author = QueueView.OpenedFile.Author;
+            Title = string.IsNullOrWhiteSpace(author) ? title : $"{title} • {author}";
+        }
+        else
+        {
+            Title = AppName;
+        }
     }
 
     public bool ShowUpdate => SettingsView.NeedsUpdate && ActiveItem != SettingsView;
@@ -91,7 +100,17 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     public void Navigate(INavigation sender, RoutedNavigationEventArgs args)
     {
         if ((args.CurrentPage as NavigationItem)?.Tag is IScreen viewModel)
+        {
             ActivateItem(viewModel);
+
+            // Save the page name for restoration on next launch
+            var pageName = (args.CurrentPage as NavigationItem)?.Content?.ToString();
+            if (!string.IsNullOrEmpty(pageName))
+            {
+                Settings.LastViewedPage = pageName;
+                Settings.Save();
+            }
+        }
 
         NotifyOfPropertyChange(() => ShowUpdate);
     }
@@ -171,6 +190,22 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     {
         Navigation = ((MainWindowView)View).RootNavigation;
         SettingsView.OnThemeChanged();
+
+        // Restore last viewed page (default to Songs if not set)
+        var lastPage = Settings.LastViewedPage;
+        if (string.IsNullOrEmpty(lastPage)) lastPage = "Songs";
+
+        var targetNavItem = Navigation.Items
+            .OfType<NavigationItem>()
+            .FirstOrDefault(nav => nav.Content?.ToString() == lastPage);
+
+        if (targetNavItem != null)
+        {
+            var index = Navigation.Items.IndexOf(targetNavItem);
+            Navigation.SelectedPageIndex = index;
+            if (targetNavItem.Tag is IScreen viewModel)
+                ActivateItem(viewModel);
+        }
 
         if (!await SettingsView.TryGetLocationAsync()) _ = SettingsView.LocationMissing();
         if (SettingsView.AutoCheckUpdates)

@@ -42,6 +42,16 @@
                                  FontFamily="{StaticResource MdlFontFamily}"
                                  FontSize="16"/>
                 </Button>
+                <Button Command="{s:Action ShowMissingFilesDialog}"
+                        Background="Transparent"
+                        Padding="8"
+                        ToolTip="Missing files detected"
+                        Visibility="{Binding HasMissingSongs, Converter={x:Static s:BoolToVisibilityConverter.Instance}}">
+                    <ui:FontIcon Glyph="&#xE7BA;"
+                                 FontFamily="{StaticResource MdlFontFamily}"
+                                 FontSize="16"
+                                 Foreground="#FFB900"/>
+                </Button>
                 <TextBlock Margin="10,0"
                            VerticalAlignment="Center"
                            Opacity="0.7"

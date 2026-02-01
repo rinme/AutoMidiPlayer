@@ -67,6 +67,16 @@ public class SongsViewModel : Screen
 
     public BindableCollection<MidiFile> SortedTracks { get; private set; } = new();
 
+    /// <summary>
+    /// Collection of songs that couldn't be loaded because the file is missing
+    /// </summary>
+    public BindableCollection<Song> MissingSongs { get; } = new();
+
+    /// <summary>
+    /// Whether there are any missing song files
+    /// </summary>
+    public bool HasMissingSongs => MissingSongs.Count > 0;
+
     public MidiFile? SelectedFile { get; set; }
 
     public BindableCollection<MidiFile> SelectedFiles { get; } = new();
@@ -208,77 +218,143 @@ public class SongsViewModel : Screen
 
     public async Task AddFiles(IEnumerable<Song> files)
     {
-        var missingSongs = new List<Song>();
-
         foreach (var file in files)
         {
             // Check if file exists before trying to add
             if (!File.Exists(file.Path))
             {
-                missingSongs.Add(file);
+                // Add to missing songs collection if not already there
+                if (!MissingSongs.Any(s => s.Id == file.Id))
+                {
+                    MissingSongs.Add(file);
+                }
                 continue;
             }
             await AddFile(file);
         }
 
-        // Show single dialog for all missing files
-        if (missingSongs.Count > 0)
-        {
-            await ShowMissingFilesDialog(missingSongs);
-        }
+        // Notify UI about missing songs status change
+        NotifyOfPropertyChange(nameof(HasMissingSongs));
+        NotifyOfPropertyChange(nameof(MissingSongs));
 
         ApplySort();
     }
 
-    private async Task ShowMissingFilesDialog(List<Song> missingSongs)
+    /// <summary>
+    /// Show the missing files dialog with individual delete buttons
+    /// </summary>
+    public async Task ShowMissingFilesDialog()
     {
-        var fileList = string.Join("\n", missingSongs.Select(s => $"• {s.Title ?? s.Path}"));
-        var content = new System.Windows.Controls.StackPanel();
+        if (MissingSongs.Count == 0) return;
+
+        var content = new System.Windows.Controls.StackPanel { MinWidth = 400 };
 
         content.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Text = $"The following {missingSongs.Count} song(s) could not be found:",
+            Text = $"The following {MissingSongs.Count} song(s) could not be found:",
             TextWrapping = System.Windows.TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 8)
+            Margin = new Thickness(0, 0, 0, 12)
         });
 
-        var scrollViewer = new System.Windows.Controls.ScrollViewer
+        var listView = new System.Windows.Controls.ListView
         {
-            MaxHeight = 200,
-            Content = new System.Windows.Controls.TextBlock
-            {
-                Text = fileList,
-                TextWrapping = System.Windows.TextWrapping.Wrap
-            }
+            MaxHeight = 300,
+            ItemsSource = MissingSongs.ToList(),
+            HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
-        content.Children.Add(scrollViewer);
 
-        content.Children.Add(new System.Windows.Controls.TextBlock
-        {
-            Text = "\nWould you like to remove them from the database?",
-            TextWrapping = System.Windows.TextWrapping.Wrap,
-            Margin = new Thickness(0, 8, 0, 0)
-        });
+        // Create item template with delete button
+        var template = new DataTemplate();
+        var gridFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.Grid));
+
+        var col1 = new FrameworkElementFactory(typeof(System.Windows.Controls.ColumnDefinition));
+        col1.SetValue(System.Windows.Controls.ColumnDefinition.WidthProperty, new GridLength(1, GridUnitType.Star));
+        var col2 = new FrameworkElementFactory(typeof(System.Windows.Controls.ColumnDefinition));
+        col2.SetValue(System.Windows.Controls.ColumnDefinition.WidthProperty, GridLength.Auto);
+
+        gridFactory.AppendChild(col1);
+        gridFactory.AppendChild(col2);
+
+        // Title text
+        var textFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.TextBlock));
+        textFactory.SetBinding(System.Windows.Controls.TextBlock.TextProperty,
+            new System.Windows.Data.Binding("Title") { FallbackValue = "Unknown" });
+        textFactory.SetValue(System.Windows.Controls.TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+        textFactory.SetValue(System.Windows.Controls.TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
+        textFactory.SetValue(System.Windows.Controls.Grid.ColumnProperty, 0);
+        gridFactory.AppendChild(textFactory);
+
+        // Delete button
+        var buttonFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.Button));
+        buttonFactory.SetValue(System.Windows.Controls.Button.ContentProperty, "✕");
+        buttonFactory.SetValue(System.Windows.Controls.Button.PaddingProperty, new Thickness(8, 2, 8, 2));
+        buttonFactory.SetValue(System.Windows.Controls.Button.MarginProperty, new Thickness(8, 0, 0, 0));
+        buttonFactory.SetValue(System.Windows.Controls.Button.ToolTipProperty, "Remove from database");
+        buttonFactory.SetValue(System.Windows.Controls.Grid.ColumnProperty, 1);
+        buttonFactory.AddHandler(System.Windows.Controls.Button.ClickEvent,
+            new RoutedEventHandler(async (s, e) =>
+            {
+                if (s is System.Windows.Controls.Button btn && btn.DataContext is Song song)
+                {
+                    await RemoveMissingSong(song);
+                    // Refresh the list
+                    listView.ItemsSource = MissingSongs.ToList();
+                }
+            }));
+        gridFactory.AppendChild(buttonFactory);
+
+        template.VisualTree = gridFactory;
+        listView.ItemTemplate = template;
+
+        content.Children.Add(listView);
 
         var dialog = new ContentDialog
         {
             Title = "Missing Files",
             Content = content,
-            PrimaryButtonText = "Remove from Database",
-            CloseButtonText = "Keep in Database"
+            PrimaryButtonText = "Remove All",
+            CloseButtonText = "Close"
         };
 
         var result = await dialog.ShowAsync();
 
         if (result == ContentDialogResult.Primary)
         {
-            await using var db = _ioc.Get<LyreContext>();
-            foreach (var song in missingSongs)
-            {
-                db.Songs.Remove(song);
-            }
-            await db.SaveChangesAsync();
+            await RemoveAllMissingSongs();
         }
+    }
+
+    /// <summary>
+    /// Remove a single missing song from the database
+    /// </summary>
+    public async Task RemoveMissingSong(Song song)
+    {
+        await using var db = _ioc.Get<LyreContext>();
+        db.Songs.Remove(song);
+        await db.SaveChangesAsync();
+
+        MissingSongs.Remove(song);
+        NotifyOfPropertyChange(nameof(HasMissingSongs));
+        NotifyOfPropertyChange(nameof(MissingSongs));
+    }
+
+    /// <summary>
+    /// Remove all missing songs from the database
+    /// </summary>
+    public async Task RemoveAllMissingSongs()
+    {
+        if (MissingSongs.Count == 0) return;
+
+        await using var db = _ioc.Get<LyreContext>();
+        foreach (var song in MissingSongs.ToList())
+        {
+            db.Songs.Remove(song);
+        }
+        await db.SaveChangesAsync();
+
+        MissingSongs.Clear();
+        NotifyOfPropertyChange(nameof(HasMissingSongs));
+        NotifyOfPropertyChange(nameof(MissingSongs));
     }
 
     public async Task ScanFolder(string folderPath)

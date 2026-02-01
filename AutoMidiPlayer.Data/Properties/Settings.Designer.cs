@@ -423,5 +423,20 @@ namespace AutoMidiPlayer.Data.Properties
                 this["UseDirectInput"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Songs")]
+        public string LastViewedPage
+        {
+            get
+            {
+                return ((string)(this["LastViewedPage"]));
+            }
+            set
+            {
+                this["LastViewedPage"] = value;
+            }
+        }
     }
 }
