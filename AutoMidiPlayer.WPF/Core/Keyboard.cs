@@ -15,9 +15,11 @@ public static class Keyboard
         GenshinWindsongLyre,
         GenshinFloralZither,
         GenshinVintageLyre,
-        Heartopia15,
-        Heartopia22,
-        Heartopia37
+        HeartopiaPiano3r,
+        HeartopiaPiano22k,
+        HeartopiaPiano37k,
+        HeartopiaLyre2r,
+        HeartopiaLyre3r
     }
 
     public enum Layout
@@ -36,9 +38,11 @@ public static class Keyboard
         [Instrument.GenshinWindsongLyre] = "Windsong Lyre",
         [Instrument.GenshinFloralZither] = "Floral Zither",
         [Instrument.GenshinVintageLyre] = "Vintage Lyre",
-        [Instrument.Heartopia15] = "Heartopia 15",
-        [Instrument.Heartopia22] = "Heartopia Piano 22",
-        [Instrument.Heartopia37] = "Heartopia Piano 37"
+        [Instrument.HeartopiaPiano3r] = "Heartopia Piano 3-Row",
+        [Instrument.HeartopiaPiano22k] = "Heartopia Piano 22",
+        [Instrument.HeartopiaPiano37k] = "Heartopia Piano 37",
+        [Instrument.HeartopiaLyre2r] = "Heartopia Lyre 2-Row",
+        [Instrument.HeartopiaLyre3r] = "Heartopia Lyre 3-Row"
     };
 
     public static readonly Dictionary<Layout, string> LayoutNames = new()
@@ -241,11 +245,11 @@ public static class Keyboard
         VirtualKeyCode.VK_U
     };
 
-    // Heartopia 15 key layout (diatonic scale - white keys only)
+    // Heartopia Piano 3-Row layout (15 keys, diatonic scale - white keys only)
     // Row 1 (Y, U, I, O, P): DO, RE, MI, FA, SOL (C4, D4, E4, F4, G4)
     // Row 2 (H, J, K, L, ;): LA, SI, DO, RE, MI (A4, B4, C5, D5, E5)
     // Row 3 (N, M, ,, ., /): FA, SOL, LA, SI, DO (F5, G5, A5, B5, C6)
-    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia15Layout = new List<VirtualKeyCode>
+    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia3rLayout = new List<VirtualKeyCode>
     {
         // Row 1: Y U I O P (C4-G4)
         VirtualKeyCode.VK_Y,       // Y (C4 - DO)
@@ -269,8 +273,8 @@ public static class Keyboard
         VirtualKeyCode.OEM_2       // / (C6 - DO)
     };
 
-    // Heartopia 15 notes (diatonic scale - white keys only, C4-C6)
-    private static readonly List<int> Heartopia15Notes = new()
+    // Heartopia Piano 3-Row notes (diatonic scale - white keys only, C4-C6)
+    private static readonly List<int> HeartopiaPiano3rNotes = new()
     {
         // Row 1: C4-G4
         60, // C4
@@ -294,8 +298,81 @@ public static class Keyboard
         84  // C6 (15th key)
     };
 
+    // Heartopia Lyre 3-Row notes (diatonic scale - white keys only, C4-C6)
+    private static readonly List<int> HeartopiaLyre3rNotes = new()
+    {
+        // Row 1: C4-G4
+        60, // C4 - DO
+        62, // D4 - RE
+        64, // E4 - MI
+        65, // F4 - FA
+        67, // G4 - SOL
+
+        // Row 2: A4-E5
+        69, // A4 - LA
+        71, // B4 - SI
+        72, // C5 - DO*
+        74, // D5 - RE*
+        76, // E5 - MI*
+
+        // Row 3: F5-C6
+        77, // F5 - FA*
+        79, // G5 - SOL*
+        81, // A5 - LA*
+        83, // B5 - SI*
+        84  // C6 - DO** (15th key)
+    };
+
+    // Heartopia 2-Row layout (15 keys, diatonic scale - white keys only)
+    // Row 1 (Q, W, E, R, T, Y, U, I): DO*, RE*, MI*, FA*, SOL*, LA*, SI*, DO** (C5-C6)
+    // Row 2 (A, S, D, F, G, H, J): DO, RE, MI, FA, SOL, LA, SI (C4-B4)
+    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia2rLayout = new List<VirtualKeyCode>
+    {
+        // Row 2 (lower octave): A S D F G H J (C4-B4)
+        VirtualKeyCode.VK_A,       // A (C4 - DO)
+        VirtualKeyCode.VK_S,       // S (D4 - RE)
+        VirtualKeyCode.VK_D,       // D (E4 - MI)
+        VirtualKeyCode.VK_F,       // F (F4 - FA)
+        VirtualKeyCode.VK_G,       // G (G4 - SOL)
+        VirtualKeyCode.VK_H,       // H (A4 - LA)
+        VirtualKeyCode.VK_J,       // J (B4 - SI)
+
+        // Row 1 (higher octave): Q W E R T Y U I (C5-C6)
+        VirtualKeyCode.VK_Q,       // Q (C5 - DO*)
+        VirtualKeyCode.VK_W,       // W (D5 - RE*)
+        VirtualKeyCode.VK_E,       // E (E5 - MI*)
+        VirtualKeyCode.VK_R,       // R (F5 - FA*)
+        VirtualKeyCode.VK_T,       // T (G5 - SOL*)
+        VirtualKeyCode.VK_Y,       // Y (A5 - LA*)
+        VirtualKeyCode.VK_U,       // U (B5 - SI*)
+        VirtualKeyCode.VK_I        // I (C6 - DO**)
+    };
+
+    // Heartopia Lyre 2-Row notes (diatonic scale - white keys only, C4-C6)
+    private static readonly List<int> HeartopiaLyre2rNotes = new()
+    {
+        // Row 2 (lower octave): C4-B4
+        60, // C4 - DO
+        62, // D4 - RE
+        64, // E4 - MI
+        65, // F4 - FA
+        67, // G4 - SOL
+        69, // A4 - LA
+        71, // B4 - SI
+
+        // Row 1 (higher octave): C5-C6
+        72, // C5 - DO*
+        74, // D5 - RE*
+        76, // E5 - MI*
+        77, // F5 - FA*
+        79, // G5 - SOL*
+        81, // A5 - LA*
+        83, // B5 - SI*
+        84  // C6 - DO** (15th key)
+    };
+
     // Heartopia Piano 22 key layout (diatonic scale - white keys only)
-    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia22Layout = new List<VirtualKeyCode>
+    private static readonly IReadOnlyList<VirtualKeyCode> Heartopia22kLayout = new List<VirtualKeyCode>
     {
         // Bottom row: Z X C V B N M (C3-B3) - dots below numbers
         VirtualKeyCode.VK_Z,       // Z (C3 - DO)
@@ -327,7 +404,7 @@ public static class Keyboard
     };
 
     // Heartopia Piano 22 notes (diatonic scale - white keys only, C3-C6)
-    private static readonly List<int> Heartopia22Notes = new()
+    private static readonly List<int> HeartopiaPiano22kNotes = new()
     {
         // Bottom row: C3-B3 (MIDI 48-59, white keys only)
         48, // C3  [0] Z
@@ -362,7 +439,7 @@ public static class Keyboard
     // Low octave:    ,  L  .  ;  /  O  0  P  -  [  =  ]
     // Middle octave: Z  S  X  D  C  V  G  B  H  N  J  M
     // High octave:   Q  2  W  3  E  R  5  T  6  Y  7  U  I
-    private static readonly IReadOnlyList<VirtualKeyCode> HeartopiaPiano37Layout = new List<VirtualKeyCode>
+    private static readonly IReadOnlyList<VirtualKeyCode> HeartopiaPiano37kLayout = new List<VirtualKeyCode>
     {
         // Low octave (C3-B3): , L . ; / O 0 P - [ = ]
         VirtualKeyCode.OEM_COMMA,  // , (C3)
@@ -463,7 +540,7 @@ public static class Keyboard
     };
 
     // Heartopia Piano 37 - Full chromatic scale (37 keys)
-    private static readonly List<int> HeartopiaNotes = new()
+    private static readonly List<int> HeartopiaPiano37kNotes = new()
     {
         // Low octave (C3-B3)
         48, // C3
@@ -511,10 +588,15 @@ public static class Keyboard
 
     public static IEnumerable<VirtualKeyCode> GetLayout(Layout layout, Instrument instrument) => instrument switch
     {
-        // Heartopia Piano has fixed keys regardless of keyboard layout
-        Instrument.Heartopia15 => Heartopia15Layout,
-        Instrument.Heartopia22 => Heartopia22Layout,
-        Instrument.Heartopia37 => HeartopiaPiano37Layout,
+        // Heartopia instruments have fixed keys regardless of keyboard layout
+        // 3-row instruments share the same layout (Y U I O P, H J K L ;, N M , . /)
+        Instrument.HeartopiaPiano3r => Heartopia3rLayout,
+        Instrument.HeartopiaLyre3r => Heartopia3rLayout,
+        // 2-row instruments share the same layout (A S D F G H J, Q W E R T Y U I)
+        Instrument.HeartopiaLyre2r => Heartopia2rLayout,
+        // Other Heartopia instruments
+        Instrument.HeartopiaPiano22k => Heartopia22kLayout,
+        Instrument.HeartopiaPiano37k => HeartopiaPiano37kLayout,
         // Other instruments use the selected keyboard layout
         _ => layout switch
         {
@@ -534,9 +616,11 @@ public static class Keyboard
         Instrument.GenshinWindsongLyre => DefaultNotes,
         Instrument.GenshinFloralZither => DefaultNotes,
         Instrument.GenshinVintageLyre => VintageNotes,
-        Instrument.Heartopia15 => Heartopia15Notes,
-        Instrument.Heartopia22 => Heartopia22Notes,
-        Instrument.Heartopia37 => HeartopiaNotes,
+        Instrument.HeartopiaPiano3r => HeartopiaPiano3rNotes,
+        Instrument.HeartopiaPiano22k => HeartopiaPiano22kNotes,
+        Instrument.HeartopiaPiano37k => HeartopiaPiano37kNotes,
+        Instrument.HeartopiaLyre2r => HeartopiaLyre2rNotes,
+        Instrument.HeartopiaLyre3r => HeartopiaLyre3rNotes,
         _ => DefaultNotes
     };
 }
