@@ -1,343 +1,340 @@
-<ui:UiWindow
-	x:Class="AutoMidiPlayer.WPF.Views.MainWindowView"
-	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-	mc:Ignorable="d"
-	xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-	xmlns:modern="http://schemas.modernwpf.com/2019"
-	xmlns:s="https://github.com/canton7/Stylet"
-	xmlns:pages="clr-namespace:AutoMidiPlayer.WPF.Views"
-	xmlns:modernWpf="clr-namespace:AutoMidiPlayer.WPF.ModernWPF"
-	xmlns:viewModels="clr-namespace:AutoMidiPlayer.WPF.ViewModels"
-	xmlns:core="clr-namespace:AutoMidiPlayer.WPF.Core"
-	d:DataContext="{d:DesignInstance Type=viewModels:MainWindowViewModel}"
-	x:Name="MainWindow"
-	Title="{Binding Title}"
-	Height="650"
-	Width="1000"
-	MinWidth="800"
-	MinHeight="550"
-	Background="{ui:ThemeResource ApplicationBackgroundBrush}"
-	ExtendsContentIntoTitleBar="True"
-	WindowBackdropType="Mica"
-	WindowCornerPreference="Round"
-	WindowStartupLocation="CenterScreen">
+<ui:FluentWindow
+    x:Class="AutoMidiPlayer.WPF.Views.MainWindowView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    mc:Ignorable="d"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:tb="http://www.hardcodet.net/taskbar"
+    xmlns:modern="http://schemas.modernwpf.com/2019"
+    xmlns:s="https://github.com/canton7/Stylet"
+    xmlns:pages="clr-namespace:AutoMidiPlayer.WPF.Views"
+    xmlns:modernWpf="clr-namespace:AutoMidiPlayer.WPF.ModernWPF"
+    xmlns:viewModels="clr-namespace:AutoMidiPlayer.WPF.ViewModels"
+    xmlns:core="clr-namespace:AutoMidiPlayer.WPF.Core"
+    d:DataContext="{d:DesignInstance Type=viewModels:MainWindowViewModel}"
+    x:Name="MainWindow"
+    Title="{Binding Title}"
+    Height="650"
+    Width="1000"
+    MinWidth="800"
+    MinHeight="550"
+    Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+    ExtendsContentIntoTitleBar="True"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
+    WindowStartupLocation="CenterScreen">
 
-	<ui:UiWindow.Resources>
-		<modernWpf:BindingProxy x:Key="DataContextProxy"
-								Data="{Binding}"/>
-	</ui:UiWindow.Resources>
+    <ui:FluentWindow.Resources>
+        <modernWpf:BindingProxy x:Key="DataContextProxy"
+                                Data="{Binding}"/>
+    </ui:FluentWindow.Resources>
 
-	<Grid AllowDrop="True"
-		  Drop="{s:Action OnFileDrop}"
-		  DragOver="{s:Action OnDragOver}"
-		  Background="Transparent">
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
+    <Grid AllowDrop="True"
+          Drop="{s:Action OnFileDrop}"
+          DragOver="{s:Action OnDragOver}"
+          Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-		<!-- Title Bar -->
-		<ui:TitleBar Grid.Row="0"
-					 Title="{Binding Title}">
-			<ui:TitleBar.Header>
-				<modern:SimpleStackPanel Margin="250,0,0,0"
-										 Orientation="Horizontal">
-					<ui:Hyperlink
-						VerticalAlignment="Center"
-						Command="{s:Action NavigateToSettings}"
-						Visibility="{Binding ShowUpdate, Converter={x:Static s:BoolToVisibilityConverter.Instance}}">
-						New update!
-					</ui:Hyperlink>
-				</modern:SimpleStackPanel>
-			</ui:TitleBar.Header>
-			<ui:TitleBar.Tray>
-				<ui:NotifyIcon FocusOnLeftClick="True"
-							   MenuOnRightClick="True"
-							   TooltipText="MIDI Player">
-					<ui:NotifyIcon.Menu>
-						<ContextMenu>
-							<ui:MenuItem s:View.ActionTarget="{Binding Data.TrackView, Source={StaticResource DataContextProxy}}"
-										 Command="{s:Action PlayPause}"
-										 Header="Play"
-										 SymbolIcon="Play16"/>
-							<ui:MenuItem s:View.ActionTarget="{Binding Data.TrackView, Source={StaticResource DataContextProxy}}"
-										 Command="{s:Action Next}"
-										 Header="Next"
-										 SymbolIcon="Next16"/>
-						</ContextMenu>
-					</ui:NotifyIcon.Menu>
-				</ui:NotifyIcon>
-			</ui:TitleBar.Tray>
-		</ui:TitleBar>
+        <!-- Tray Icon (placed inside Grid as it doesn't render visually) -->
+        <tb:TaskbarIcon
+            ToolTipText="MIDI Player"
+            DoubleClickCommand="{s:Action ShowWindow}">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem s:View.ActionTarget="{Binding TrackView}"
+                              Command="{s:Action PlayPause}"
+                              Header="Play"/>
+                    <MenuItem s:View.ActionTarget="{Binding TrackView}"
+                              Command="{s:Action Next}"
+                              Header="Next"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
 
-		<!-- Main Content Area -->
-		<Grid Grid.Row="1">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="Auto"/>
-				<ColumnDefinition Width="*"/>
-			</Grid.ColumnDefinitions>
+        <!-- Title Bar -->
+        <ui:TitleBar Grid.Row="0"
+                     Title="{Binding Title}">
+            <ui:TitleBar.Header>
+                <modern:SimpleStackPanel Margin="250,0,0,0"
+                                         Orientation="Horizontal">
+                    <ui:HyperlinkButton
+                        Command="{s:Action NavigateToSettings}"
+                        Visibility="{Binding ShowUpdate, Converter={x:Static s:BoolToVisibilityConverter.Instance}}"
+                        Margin="485,0,0,0"
+                        Content="New update!"/>
+                </modern:SimpleStackPanel>
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
 
-			<!-- Left Navigation -->
-			<ui:NavigationStore
-				x:Name="RootNavigation"
-				Margin="6,0"
-				Precache="False"
-				SelectedPageIndex="0"
-				Navigated="{s:Action Navigate}"
-				Frame="{Binding ElementName=RootFrame, Mode=OneWay}">
-				<ui:NavigationStore.Items>
-					<ui:NavigationItem Content="Tracks"
-									   Icon="MusicNote220"
-									   PageType="{x:Type pages:TrackView}"
-									   Tag="{Binding TrackView}"/>
-					<ui:NavigationItem Content="Sheet"
-									   Icon="BookOpenMicrophone20"
-									   PageType="{x:Type pages:PianoSheetView}"
-									   Tag="{Binding PianoSheetView}"/>
-					<ui:NavigationItem Content="Instrument"
-									   Icon="MusicNote2Play20"
-									   PageType="{x:Type pages:InstrumentView}"
-									   Tag="{Binding InstrumentView}"/>
-					<ui:NavigationItem Content="Queue"
-									   Icon="TextBulletListSquareSearch20"
-									   PageType="{x:Type pages:QueueView}"
-									   Tag="{Binding QueueView}"/>
-					<ui:NavigationItem Content="Songs"
-									   Icon="MusicNote120"
-									   PageType="{x:Type pages:SongsView}"
-									   Tag="{Binding SongsView}"/>
-				</ui:NavigationStore.Items>
-				<ui:NavigationStore.Footer>
-					<ui:NavigationItem Content="Theme"
-									   Icon="DarkTheme24"
-									   Command="{s:Action ToggleTheme}"/>
-					<ui:NavigationItem Content="Settings"
-									   Icon="Settings16"
-									   PageType="{x:Type pages:SettingsPageView}"
-									   Tag="{Binding SettingsView}"/>
-				</ui:NavigationStore.Footer>
-			</ui:NavigationStore>
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-			<!-- Content Panel -->
-			<Border Grid.Column="1"
-					CornerRadius="8,0,0,0"
-					Background="{ui:ThemeResource ControlFillColorDefaultBrush}">
-				<Grid>
-					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto"/>
-						<RowDefinition Height="*"/>
-					</Grid.RowDefinitions>
-					<ui:Breadcrumb
-						Grid.Row="0"
-						Margin="18,8,18,4"
-						Padding="0"
-						HorizontalAlignment="Left"
-						VerticalAlignment="Top"
-						FontSize="24"
-						Navigation="{Binding ElementName=RootNavigation, Mode=OneWay}"/>
-					<Frame Grid.Row="0"
-						   x:Name="RootFrame"
-						   Visibility="Hidden"/>
-					<modernWpf:AnimatedContentControl Grid.Row="1"
-													  Margin="16,4,16,10"
-													  s:View.Model="{Binding ActiveItem}"/>
-				</Grid>
-			</Border>
-		</Grid>
+            <!-- Left Navigation -->
+            <ui:NavigationView
+                x:Name="RootNavigation"
+                Margin="6,0"
+                PaneDisplayMode="LeftFluent"
+                IsBackButtonVisible="Collapsed"
+                IsPaneToggleVisible="False">
+                <ui:NavigationView.MenuItems>
+                    <ui:NavigationViewItem Content="Tracks"
+                                           Icon="{ui:SymbolIcon MusicNote220}"
+                                           Tag="{Binding TrackView}"
+                                           Click="{s:Action NavigateToItem}"/>
+                    <ui:NavigationViewItem Content="Sheet"
+                                           Icon="{ui:SymbolIcon BookOpenMicrophone20}"
+                                           Tag="{Binding PianoSheetView}"
+                                           Click="{s:Action NavigateToItem}"/>
+                    <ui:NavigationViewItem Content="Instrument"
+                                           Icon="{ui:SymbolIcon MusicNote2Play20}"
+                                           Tag="{Binding InstrumentView}"
+                                           Click="{s:Action NavigateToItem}"/>
+                    <ui:NavigationViewItem Content="Queue"
+                                           Icon="{ui:SymbolIcon TextBulletListSquareSearch20}"
+                                           Tag="{Binding QueueView}"
+                                           Click="{s:Action NavigateToItem}"/>
+                    <ui:NavigationViewItem Content="Songs"
+                                           Icon="{ui:SymbolIcon MusicNote120}"
+                                           Tag="{Binding SongsView}"
+                                           Click="{s:Action NavigateToItem}"/>
+                </ui:NavigationView.MenuItems>
+                <ui:NavigationView.FooterMenuItems>
+                    <ui:NavigationViewItem Content="Theme"
+                                           Icon="{ui:SymbolIcon DarkTheme24}"
+                                           Click="{s:Action ToggleTheme}"/>
+                    <ui:NavigationViewItem Content="Settings"
+                                           Icon="{ui:SymbolIcon Settings16}"
+                                           Tag="{Binding SettingsView}"
+                                           Click="{s:Action NavigateToItem}"/>
+                </ui:NavigationView.FooterMenuItems>
+            </ui:NavigationView>
 
-		<!-- Fixed Bottom Player Controls -->
-		<Border Grid.Row="2"
-				Background="{ui:ThemeResource ControlFillColorDefaultBrush}"
-				BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-				BorderThickness="0,1,0,0"
-				Padding="24,16">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"
-									  MinWidth="180"/>
-					<ColumnDefinition Width="Auto"/>
-					<ColumnDefinition Width="*"
-									  MinWidth="180"/>
-				</Grid.ColumnDefinitions>
+            <!-- Content Panel -->
+            <Border Grid.Column="1"
+                    CornerRadius="8,0,0,0"
+                    Background="{ui:ThemeResource ControlFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <ui:BreadcrumbBar
+                        Grid.Row="0"
+                        Margin="18,8,18,4"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        FontSize="24"
+                        ItemsSource="{Binding BreadcrumbItems}"/>
+                    <Frame Grid.Row="0"
+                           x:Name="RootFrame"
+                           Visibility="Hidden"/>
+                    <modernWpf:AnimatedContentControl Grid.Row="1"
+                                                      Margin="16,4,16,10"
+                                                      s:View.Model="{Binding ActiveItem}"/>
+                </Grid>
+            </Border>
+        </Grid>
 
-				<!-- Left: Song Info -->
-				<StackPanel Grid.Column="0"
-							Orientation="Horizontal"
-							VerticalAlignment="Center">
-					<Border Width="48"
-							Height="48"
-							CornerRadius="4"
-							Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-						<ui:FontIcon Glyph="&#xEC4F;"
-									 FontFamily="{StaticResource MdlFontFamily}"
-									 FontSize="20"/>
-					</Border>
-					<StackPanel Margin="12,0,0,0"
-								VerticalAlignment="Center">
-						<TextBlock Text="{Binding TrackView.Queue.OpenedFile.Title, FallbackValue=No song playing}"
-								   FontWeight="SemiBold"
-								   FontSize="14"
-								   TextTrimming="CharacterEllipsis"
-								   MaxWidth="200"/>
-						<TextBlock Text="{Binding TrackView.Queue.OpenedFile.Song.Author, FallbackValue=Unknown artist}"
-								   Opacity="0.6"
-								   FontSize="12"
-								   TextTrimming="CharacterEllipsis"
-								   MaxWidth="200"/>
-					</StackPanel>
-				</StackPanel>
+        <!-- Fixed Bottom Player Controls -->
+        <Border Grid.Row="2"
+                Background="{ui:ThemeResource ControlFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"
+                                      MinWidth="180"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"
+                                      MinWidth="180"/>
+                </Grid.ColumnDefinitions>
 
-				<!-- Center: Playback Controls -->
-				<StackPanel Grid.Column="1"
-							HorizontalAlignment="Center">
-					<!-- Control Buttons -->
-					<modern:SimpleStackPanel Orientation="Horizontal"
-											 HorizontalAlignment="Center"
-											 Spacing="12">
-						<Button s:View.ActionTarget="{Binding TrackView.Queue}"
-								Command="{s:Action ToggleShuffle}"
-								Style="{StaticResource PlayerControlButton}"
-								ToolTip="Shuffle">
-							<Path Data="{StaticResource ShuffleIconGeometry}"
-								  Fill="{Binding TrackView.Queue.ShuffleStateColor}"
-								  Style="{StaticResource PlayerControlIcon}"
-								  Width="14"
-								  Height="14"/>
-						</Button>
+                <!-- Left: Song Info -->
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Border Width="48"
+                            Height="48"
+                            CornerRadius="4"
+                            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                        <ui:FontIcon Glyph="&#xEC4F;"
+                                     FontFamily="{StaticResource MdlFontFamily}"
+                                     FontSize="20"/>
+                    </Border>
+                    <StackPanel Margin="12,0,0,0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TrackView.Queue.OpenedFile.Title, FallbackValue=No song playing}"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="200"/>
+                        <TextBlock Text="{Binding TrackView.Queue.OpenedFile.Song.Author, FallbackValue=Unknown artist}"
+                                   Opacity="0.6"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="200"/>
+                    </StackPanel>
+                </StackPanel>
 
-						<Button s:View.ActionTarget="{Binding Playback}"
-								Command="{s:Action Previous}"
-								IsHitTestVisible="{Binding Playback.CanHitPrevious}"
-								Style="{StaticResource PlayerControlButton}"
-								ToolTip="Previous">
-							<Path Data="{StaticResource PreviousIconGeometry}"
-								  Style="{StaticResource PlayerControlIconNav}"
-								  Width="14"
-								  Height="14"/>
-						</Button>
+                <!-- Center: Playback Controls -->
+                <StackPanel Grid.Column="1"
+                            HorizontalAlignment="Center">
+                    <!-- Control Buttons -->
+                    <modern:SimpleStackPanel Orientation="Horizontal"
+                                             HorizontalAlignment="Center"
+                                             Spacing="12">
+                        <Button s:View.ActionTarget="{Binding TrackView.Queue}"
+                                Command="{s:Action ToggleShuffle}"
+                                Style="{StaticResource PlayerControlButton}"
+                                ToolTip="Shuffle">
+                            <Path Data="{StaticResource ShuffleIconGeometry}"
+                                  Fill="{Binding TrackView.Queue.ShuffleStateColor}"
+                                  Style="{StaticResource PlayerControlIcon}"
+                                  Width="14"
+                                  Height="14"/>
+                        </Button>
 
-						<Button s:View.ActionTarget="{Binding Playback}"
-								Command="{s:Action PlayPause}"
-								IsHitTestVisible="{Binding Playback.CanHitPlayPause}"
-								Style="{StaticResource PlayPauseButton}"
-								ToolTip="{Binding Playback.PlayPauseTooltip}">
-							<Path Data="{Binding Playback.PlayPauseGeometry}"
-								  Fill="{DynamicResource SystemControlBackgroundAltHighBrush}"
-								  Style="{StaticResource PlayerControlIcon}"
-								  Margin="1,0,0,0"
-								  Width="14"
-								  Height="14"/>
-						</Button>
+                        <Button s:View.ActionTarget="{Binding Playback}"
+                                Command="{s:Action Previous}"
+                                IsHitTestVisible="{Binding Playback.CanHitPrevious}"
+                                Style="{StaticResource PlayerControlButton}"
+                                ToolTip="Previous">
+                            <Path Data="{StaticResource PreviousIconGeometry}"
+                                  Style="{StaticResource PlayerControlIconNav}"
+                                  Width="14"
+                                  Height="14"/>
+                        </Button>
 
-						<Button s:View.ActionTarget="{Binding Playback}"
-								Command="{s:Action Next}"
-								IsHitTestVisible="{Binding Playback.CanHitNext}"
-								Style="{StaticResource PlayerControlButton}"
-								ToolTip="Next">
-							<Path Data="{StaticResource NextIconGeometry}"
-								  Style="{StaticResource PlayerControlIconNav}"
-								  Width="14"
-								  Height="14"/>
-						</Button>
+                        <Button s:View.ActionTarget="{Binding Playback}"
+                                Command="{s:Action PlayPause}"
+                                IsHitTestVisible="{Binding Playback.CanHitPlayPause}"
+                                Style="{StaticResource PlayPauseButton}"
+                                ToolTip="{Binding Playback.PlayPauseTooltip}">
+                            <Path Data="{Binding Playback.PlayPauseGeometry}"
+                                  Fill="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                  Style="{StaticResource PlayerControlIcon}"
+                                  Margin="1,0,0,0"
+                                  Width="14"
+                                  Height="14"/>
+                        </Button>
 
-						<Button s:View.ActionTarget="{Binding TrackView.Queue}"
-								Command="{s:Action ToggleLoop}"
-								Style="{StaticResource PlayerControlButton}"
-								ToolTip="{Binding TrackView.Queue.LoopTooltip}">
-							<Path Data="{Binding TrackView.Queue.LoopGeometry}"
-								  Fill="{Binding TrackView.Queue.LoopStateColor}"
-								  Style="{StaticResource PlayerControlIcon}"
-								  VerticalAlignment="Bottom"
-								  Width="14"
-								  Height="14"/>
-						</Button>
-					</modern:SimpleStackPanel>
+                        <Button s:View.ActionTarget="{Binding Playback}"
+                                Command="{s:Action Next}"
+                                IsHitTestVisible="{Binding Playback.CanHitNext}"
+                                Style="{StaticResource PlayerControlButton}"
+                                ToolTip="Next">
+                            <Path Data="{StaticResource NextIconGeometry}"
+                                  Style="{StaticResource PlayerControlIconNav}"
+                                  Width="14"
+                                  Height="14"/>
+                        </Button>
 
-					<!-- Progress Bar -->
-					<Grid Margin="0,8,0,0"
-						  MinWidth="400">
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="Auto"/>
-							<ColumnDefinition Width="*"/>
-							<ColumnDefinition Width="Auto"/>
-						</Grid.ColumnDefinitions>
+                        <Button s:View.ActionTarget="{Binding TrackView.Queue}"
+                                Command="{s:Action ToggleLoop}"
+                                Style="{StaticResource PlayerControlButton}"
+                                ToolTip="{Binding TrackView.Queue.LoopTooltip}">
+                            <Path Data="{Binding TrackView.Queue.LoopGeometry}"
+                                  Fill="{Binding TrackView.Queue.LoopStateColor}"
+                                  Style="{StaticResource PlayerControlIcon}"
+                                  VerticalAlignment="Bottom"
+                                  Width="14"
+                                  Height="14"/>
+                        </Button>
+                    </modern:SimpleStackPanel>
 
-						<TextBlock Grid.Column="0"
-								   VerticalAlignment="Center"
-								   FontSize="11"
-								   Opacity="0.7"
-								   Text="{Binding Playback.CurrentTime, StringFormat=m\\:ss}"/>
-						<Slider Grid.Column="1"
-								Margin="8,0"
-								IsMoveToPointEnabled="True"
-								IsEnabled="{Binding Playback.CanHitPlayPause}"
-								Value="{Binding Playback.SongPosition}"
-								Maximum="{Binding Playback.MaximumTime.TotalSeconds}"
-								IsSelectionRangeEnabled="True"
-								SelectionStart="0"
-								SelectionEnd="{Binding Playback.SongPosition, Mode=OneWay}"/>
-						<TextBlock Grid.Column="2"
-								   VerticalAlignment="Center"
-								   FontSize="11"
-								   Opacity="0.7"
-								   Text="{Binding Playback.MaximumTime, StringFormat=m\\:ss}"/>
-					</Grid>
-				</StackPanel>
+                    <!-- Progress Bar -->
+                    <Grid Margin="0,8,0,0"
+                          MinWidth="400">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-				<!-- Right: Per-song Settings -->
-				<modern:SimpleStackPanel Grid.Column="2"
-										 Orientation="Horizontal"
-										 HorizontalAlignment="Right"
-										 VerticalAlignment="Center"
-										 Spacing="12">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   FontSize="11"
+                                   Opacity="0.7"
+                                   Text="{Binding Playback.CurrentTime, StringFormat=m\\:ss}"/>
+                        <Slider Grid.Column="1"
+                                Margin="8,0"
+                                IsMoveToPointEnabled="True"
+                                IsEnabled="{Binding Playback.CanHitPlayPause}"
+                                Value="{Binding Playback.SongPosition}"
+                                Maximum="{Binding Playback.MaximumTime.TotalSeconds}"
+                                IsSelectionRangeEnabled="True"
+                                SelectionStart="0"
+                                SelectionEnd="{Binding Playback.SongPosition, Mode=OneWay}"
+                                Style="{StaticResource ProgressSlider}"/>
+                        <TextBlock Grid.Column="2"
+                                   VerticalAlignment="Center"
+                                   FontSize="11"
+                                   Opacity="0.7"
+                                   Text="{Binding Playback.MaximumTime, StringFormat=m\\:ss}"/>
+                    </Grid>
+                </StackPanel>
 
-					<!-- Key -->
-					<StackPanel ToolTip="Key offset for transposition">
-						<TextBlock Text="Key"
-								   FontSize="10"
-								   Opacity="0.6"
-								   HorizontalAlignment="Center"/>
-						<ComboBox MinWidth="90"
-								  MaxHeight="24"
-								  Padding="8,2"
-								  ItemsSource="{Binding SettingsView.KeyOptions}"
-								  SelectedItem="{Binding SettingsView.SelectedKeyOption}"
-								  DisplayMemberPath="Display"/>
-					</StackPanel>
+                <!-- Right: Per-song Settings -->
+                <modern:SimpleStackPanel Grid.Column="2"
+                                         Orientation="Horizontal"
+                                         HorizontalAlignment="Right"
+                                         VerticalAlignment="Center"
+                                         Spacing="12">
 
-					<!-- Speed -->
-					<StackPanel ToolTip="Playback speed">
-						<TextBlock Text="Speed"
-								   FontSize="10"
-								   Opacity="0.6"
-								   HorizontalAlignment="Center"/>
-						<ComboBox MinWidth="70"
-								  MaxHeight="24"
-								  Padding="8,2"
-								  ItemsSource="{Binding SettingsView.SpeedOptions}"
-								  SelectedItem="{Binding SettingsView.SelectedSpeedOption}"
-								  DisplayMemberPath="Display"/>
-					</StackPanel>
+                    <!-- Key -->
+                    <StackPanel ToolTip="Key offset for transposition">
+                        <TextBlock Text="Key"
+                                   FontSize="10"
+                                   Opacity="0.6"
+                                   HorizontalAlignment="Center"/>
+                        <ComboBox MinWidth="90"
+                                  MaxHeight="24"
+                                  Padding="8,2"
+                                  ItemsSource="{Binding SettingsView.KeyOptions}"
+                                  SelectedItem="{Binding SettingsView.SelectedKeyOption}"
+                                  DisplayMemberPath="Display"/>
+                    </StackPanel>
 
-					<!-- Transpose Mode -->
-					<StackPanel ToolTip="Transpose mode for out-of-range notes">
-						<TextBlock Text="Transpose"
-								   FontSize="10"
-								   Opacity="0.6"
-								   HorizontalAlignment="Center"/>
-						<ComboBox MinWidth="80"
-								  MaxHeight="24"
-								  Padding="8,2"
-								  ItemsSource="{x:Static viewModels:SettingsPageViewModel.TransposeNames}"
-								  SelectedItem="{Binding SettingsView.Transpose}"
-								  DisplayMemberPath="Value"/>
-					</StackPanel>
-				</modern:SimpleStackPanel>
-			</Grid>
-		</Border>
-	</Grid>
-</ui:UiWindow>
+                    <!-- Speed -->
+                    <StackPanel ToolTip="Playback speed">
+                        <TextBlock Text="Speed"
+                                   FontSize="10"
+                                   Opacity="0.6"
+                                   HorizontalAlignment="Center"/>
+                        <ComboBox MinWidth="70"
+                                  MaxHeight="24"
+                                  Padding="8,2"
+                                  ItemsSource="{Binding SettingsView.SpeedOptions}"
+                                  SelectedItem="{Binding SettingsView.SelectedSpeedOption}"
+                                  DisplayMemberPath="Display"/>
+                    </StackPanel>
+
+                    <!-- Transpose Mode -->
+                    <StackPanel ToolTip="Transpose mode for out-of-range notes">
+                        <TextBlock Text="Transpose"
+                                   FontSize="10"
+                                   Opacity="0.6"
+                                   HorizontalAlignment="Center"/>
+                        <ComboBox MinWidth="80"
+                                  MaxHeight="24"
+                                  Padding="8,2"
+                                  ItemsSource="{x:Static viewModels:SettingsPageViewModel.TransposeNames}"
+                                  SelectedItem="{Binding SettingsView.Transpose}"
+                                  DisplayMemberPath="Value"/>
+                    </StackPanel>
+                </modern:SimpleStackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

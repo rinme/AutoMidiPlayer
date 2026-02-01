@@ -10,32 +10,57 @@ using ModernWpf;
 using Stylet;
 using StyletIoC;
 using Wpf.Ui.Appearance;
-using Wpf.Ui.Common;
 using Wpf.Ui.Controls;
-using Wpf.Ui.Controls.Interfaces;
-using Wpf.Ui.Mvvm.Contracts;
 using AutoSuggestBox = Wpf.Ui.Controls.AutoSuggestBox;
 using MidiFile = AutoMidiPlayer.Data.Midi.MidiFile;
+using WpfUiAppTheme = Wpf.Ui.Appearance.ApplicationTheme;
 
 namespace AutoMidiPlayer.WPF.ViewModels;
 
 [UsedImplicitly]
 public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
 {
-    public static NavigationStore Navigation = null!;
-    private readonly IThemeService _theme;
+    public static NavigationView? Navigation = null;
     private readonly IEventAggregator _events;
     private static readonly Settings Settings = Settings.Default;
 
     private static readonly string AppName = $"Auto MIDI Player {SettingsPageViewModel.ProgramVersion}";
     private static readonly string[] MidiExtensions = { ".mid", ".midi" };
 
-    public MainWindowViewModel(IContainer ioc, IThemeService theme)
+    // Current page name for breadcrumb display
+    public string[] BreadcrumbItems { get; set; } = { "Tracks" };
+
+    // Helper to set selected navigation item safely
+    private void SetSelectedNavItem(NavigationViewItem? item)
+    {
+        if (Navigation == null || item == null) return;
+
+        try
+        {
+            // Deactivate all items first
+            foreach (var navItem in Navigation.MenuItems.OfType<NavigationViewItem>())
+            {
+                try { navItem.IsActive = false; } catch { /* Ignore animation errors */ }
+            }
+            foreach (var navItem in Navigation.FooterMenuItems.OfType<NavigationViewItem>())
+            {
+                try { navItem.IsActive = false; } catch { /* Ignore animation errors */ }
+            }
+
+            // Activate the selected item
+            try { item.IsActive = true; } catch { /* Ignore animation errors */ }
+        }
+        catch
+        {
+            // Fallback: ignore visual selection errors
+        }
+    }
+
+    public MainWindowViewModel(IContainer ioc)
     {
         Title = AppName;
 
         Ioc = ioc;
-        _theme = theme;
         _events = ioc.Get<IEventAggregator>();
         _events.Subscribe(this);
 
@@ -97,16 +122,26 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
 
     public string Title { get; set; }
 
-    public void Navigate(INavigation sender, RoutedNavigationEventArgs args)
+    public void Navigate(NavigationView sender, RoutedEventArgs args)
     {
-        if ((args.CurrentPage as NavigationItem)?.Tag is IScreen viewModel)
+        // Legacy method - kept for compatibility
+        NotifyOfPropertyChange(() => ShowUpdate);
+    }
+
+    public void NavigateToItem(object sender, RoutedEventArgs args)
+    {
+        if (sender is NavigationViewItem { Tag: IScreen viewModel } item)
         {
             ActivateItem(viewModel);
 
-            // Save the page name for restoration on next launch
-            var pageName = (args.CurrentPage as NavigationItem)?.Content?.ToString();
+            // Set selected item for visual indicator
+            SetSelectedNavItem(item);
+
+            // Update breadcrumb with current page name
+            var pageName = item.Content?.ToString();
             if (!string.IsNullOrEmpty(pageName))
             {
+                BreadcrumbItems = new[] { pageName };
                 Settings.LastViewedPage = pageName;
                 Settings.Save();
             }
@@ -119,13 +154,12 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
 
     public void ToggleTheme()
     {
-        ThemeManager.Current.ApplicationTheme = _theme.GetTheme() switch
+        var currentTheme = ApplicationThemeManager.GetAppTheme();
+        ThemeManager.Current.ApplicationTheme = currentTheme switch
         {
-            ThemeType.Unknown => ApplicationTheme.Dark,
-            ThemeType.Dark => ApplicationTheme.Light,
-            ThemeType.Light => ApplicationTheme.Dark,
-            ThemeType.HighContrast => ApplicationTheme.Dark,
-            _ => ApplicationTheme.Dark
+            WpfUiAppTheme.Dark => ModernWpf.ApplicationTheme.Light,
+            WpfUiAppTheme.Light => ModernWpf.ApplicationTheme.Dark,
+            _ => ModernWpf.ApplicationTheme.Dark
         };
 
         SettingsView.OnThemeChanged();
@@ -137,11 +171,14 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
         {
             ActivateItem(QueueView);
 
-            var queue = Navigation.Items
-                .OfType<NavigationItem>()
-                .First(nav => nav.Tag == QueueView);
-            var index = Navigation.Items.IndexOf(queue);
-            Navigation.SelectedPageIndex = index;
+            var queue = Navigation?.MenuItems
+                .OfType<NavigationViewItem>()
+                .FirstOrDefault(nav => nav.Tag == QueueView);
+            if (queue != null)
+            {
+                SetSelectedNavItem(queue);
+                BreadcrumbItems = new[] { "Queue" };
+            }
         }
 
         QueueView.FilterText = sender.Text;
@@ -178,11 +215,14 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
 
             // Navigate to songs view
             ActivateItem(SongsView);
-            var songs = Navigation.Items
-                .OfType<NavigationItem>()
-                .First(nav => nav.Tag == SongsView);
-            var index = Navigation.Items.IndexOf(songs);
-            Navigation.SelectedPageIndex = index;
+            var songs = Navigation?.MenuItems
+                .OfType<NavigationViewItem>()
+                .FirstOrDefault(nav => nav.Tag == SongsView);
+            if (songs != null)
+            {
+                SetSelectedNavItem(songs);
+                BreadcrumbItems = new[] { "Songs" };
+            }
         }
     }
 
@@ -195,16 +235,21 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
         var lastPage = Settings.LastViewedPage;
         if (string.IsNullOrEmpty(lastPage)) lastPage = "Songs";
 
-        var targetNavItem = Navigation.Items
-            .OfType<NavigationItem>()
+        // Search in both MenuItems and FooterMenuItems
+        var targetNavItem = Navigation?.MenuItems
+            .OfType<NavigationViewItem>()
+            .FirstOrDefault(nav => nav.Content?.ToString() == lastPage)
+            ?? Navigation?.FooterMenuItems
+            .OfType<NavigationViewItem>()
             .FirstOrDefault(nav => nav.Content?.ToString() == lastPage);
 
-        if (targetNavItem != null)
+        if (targetNavItem?.Tag is IScreen viewModel)
         {
-            var index = Navigation.Items.IndexOf(targetNavItem);
-            Navigation.SelectedPageIndex = index;
-            if (targetNavItem.Tag is IScreen viewModel)
-                ActivateItem(viewModel);
+            ActivateItem(viewModel);
+            // Set selected item for visual indicator
+            SetSelectedNavItem(targetNavItem);
+            // Update breadcrumb with current page name
+            BreadcrumbItems = new[] { lastPage };
         }
 
         if (!await SettingsView.TryGetLocationAsync()) _ = SettingsView.LocationMissing();

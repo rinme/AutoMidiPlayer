@@ -13,8 +13,8 @@ public class ErrorContentDialog : ContentDialog
         Title = e.GetType().Name;
         Content = e.Message;
 
-        PrimaryButtonText = options?.ElementAtOrDefault(0)?.Humanize();
-        SecondaryButtonText = options?.ElementAtOrDefault(1)?.Humanize();
+        PrimaryButtonText = options?.ElementAtOrDefault(0)?.ToString()?.Humanize();
+        SecondaryButtonText = options?.ElementAtOrDefault(1)?.ToString()?.Humanize();
 
         CloseButtonText = closeText ?? "Abort";
     }

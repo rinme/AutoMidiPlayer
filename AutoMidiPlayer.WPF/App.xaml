@@ -390,18 +390,173 @@
                 </Setter>
             </Style>
 
-            <!-- Progress slider style with filled track -->
+            <!-- Filled part of slider track (left of thumb) -->
+            <Style x:Key="SliderRepeatButtonFilled"
+                   TargetType="RepeatButton">
+                <Setter Property="OverridesDefaultStyle"
+                        Value="True"/>
+                <Setter Property="Focusable"
+                        Value="False"/>
+                <Setter Property="IsTabStop"
+                        Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Border x:Name="FilledBorder"
+                                    Height="4"
+                                    Background="White"
+                                    CornerRadius="2"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Unfilled part of slider track (right of thumb) -->
+            <Style x:Key="SliderRepeatButtonEmpty"
+                   TargetType="RepeatButton">
+                <Setter Property="OverridesDefaultStyle"
+                        Value="True"/>
+                <Setter Property="Focusable"
+                        Value="False"/>
+                <Setter Property="IsTabStop"
+                        Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Border Height="4"
+                                    Background="#4DFFFFFF"
+                                    CornerRadius="0,2,2,0"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Progress slider style with filled track and animated thumb -->
             <Style x:Key="ProgressSlider"
-                   TargetType="Slider"
-                   BasedOn="{StaticResource {x:Type Slider}}">
+                   TargetType="Slider">
+                <Setter Property="Stylus.IsPressAndHoldEnabled"
+                        Value="False"/>
+                <Setter Property="Background"
+                        Value="Transparent"/>
                 <Setter Property="IsMoveToPointEnabled"
                         Value="True"/>
                 <Setter Property="Margin"
                         Value="8,0"/>
-                <Style.Resources>
-                    <SolidColorBrush x:Key="SliderTrackValueFill"
-                                     Color="{DynamicResource SystemAccentColor}"/>
-                </Style.Resources>
+                <Setter Property="MinHeight"
+                        Value="20"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Slider">
+                            <Grid x:Name="SliderContainer">
+                                <!-- Invisible hit area to prevent flickering at edges -->
+                                <Border Background="Transparent"
+                                        Height="20"
+                                        VerticalAlignment="Center"/>
+                                <Track x:Name="PART_Track"
+                                       Margin="6,0">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton x:Name="FilledTrack"
+                                                      Command="{x:Static Slider.DecreaseLarge}"
+                                                      Style="{StaticResource SliderRepeatButtonFilled}"/>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton x:Name="EmptyTrack"
+                                                      Command="{x:Static Slider.IncreaseLarge}"
+                                                      Style="{StaticResource SliderRepeatButtonEmpty}"/>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb x:Name="SliderThumb"
+                                               Width="12"
+                                               Height="12"
+                                               Margin="-15,0,-15,0"
+                                               VerticalAlignment="Center"
+                                               Focusable="False"
+                                               OverridesDefaultStyle="True"
+                                               RenderTransformOrigin="0.5,0.5"
+                                               Opacity="0">
+                                            <Thumb.RenderTransform>
+                                                <ScaleTransform ScaleX="0"
+                                                        ScaleY="0"/>
+                                            </Thumb.RenderTransform>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Grid Background="Transparent">
+                                                        <Ellipse Width="12"
+                                                                 Height="12"
+                                                                 Fill="White"/>
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+
+                            <ControlTemplate.Triggers>
+                                <!-- Hover: animate thumb appearance and change track to accent -->
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter TargetName="FilledTrack"
+                                            Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4"
+                                                        Background="{DynamicResource SystemAccentColorBrush}"
+                                                        CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="SliderThumb"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="1"
+                                                        Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="SliderThumb"
+                                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                 To="1"
+                                                        Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="SliderThumb"
+                                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                 To="1"
+                                                        Duration="0:0:0.15"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="SliderThumb"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="0"
+                                                        Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="SliderThumb"
+                                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                 To="0"
+                                                        Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="SliderThumb"
+                                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                 To="0"
+                                                        Duration="0:0:0.15"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                                <!-- Disabled state -->
+                                <Trigger Property="IsEnabled"
+                                         Value="False">
+                                    <Setter TargetName="FilledTrack"
+                                            Property="Opacity"
+                                            Value="0.3"/>
+                                    <Setter TargetName="EmptyTrack"
+                                            Property="Opacity"
+                                            Value="0.3"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

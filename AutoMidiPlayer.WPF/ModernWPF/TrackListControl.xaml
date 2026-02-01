@@ -26,23 +26,23 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="48"
-                            SharedSizeGroup="Col0"/>
+                                      SharedSizeGroup="Col0"/>
                     <ColumnDefinition Width="*"
                                       MinWidth="150"/>
                     <ColumnDefinition Width="100"
-                            SharedSizeGroup="Col2"/>
+                                      SharedSizeGroup="Col2"/>
                     <ColumnDefinition Width="60"
-                            SharedSizeGroup="Col3"/>
+                                      SharedSizeGroup="Col3"/>
                     <ColumnDefinition Width="50"
-                            SharedSizeGroup="Col4"/>
+                                      SharedSizeGroup="Col4"/>
                     <ColumnDefinition Width="70"
-                            SharedSizeGroup="Col5"/>
+                                      SharedSizeGroup="Col5"/>
                     <ColumnDefinition Width="80"
-                            SharedSizeGroup="Col6"/>
+                                      SharedSizeGroup="Col6"/>
                     <ColumnDefinition Width="60"
-                            SharedSizeGroup="Col7"/>
+                                      SharedSizeGroup="Col7"/>
                     <ColumnDefinition Width="48"
-                            SharedSizeGroup="Col8"/>
+                                      SharedSizeGroup="Col8"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
@@ -107,23 +107,23 @@
                         <Grid x:Name="RowGrid">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48"
-                                        SharedSizeGroup="Col0"/>
+                                                  SharedSizeGroup="Col0"/>
                                 <ColumnDefinition Width="*"
                                                   MinWidth="150"/>
                                 <ColumnDefinition Width="100"
-                                        SharedSizeGroup="Col2"/>
+                                                  SharedSizeGroup="Col2"/>
                                 <ColumnDefinition Width="60"
-                                        SharedSizeGroup="Col3"/>
+                                                  SharedSizeGroup="Col3"/>
                                 <ColumnDefinition Width="50"
-                                        SharedSizeGroup="Col4"/>
+                                                  SharedSizeGroup="Col4"/>
                                 <ColumnDefinition Width="70"
-                                        SharedSizeGroup="Col5"/>
+                                                  SharedSizeGroup="Col5"/>
                                 <ColumnDefinition Width="80"
-                                        SharedSizeGroup="Col6"/>
+                                                  SharedSizeGroup="Col6"/>
                                 <ColumnDefinition Width="60"
-                                        SharedSizeGroup="Col7"/>
+                                                  SharedSizeGroup="Col7"/>
                                 <ColumnDefinition Width="48"
-                                        SharedSizeGroup="Col8"/>
+                                                  SharedSizeGroup="Col8"/>
                             </Grid.ColumnDefinitions>
 
                             <!-- # Position / Equalizer when playing / Play Button on hover -->

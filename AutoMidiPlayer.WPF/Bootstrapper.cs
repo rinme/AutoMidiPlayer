@@ -17,8 +17,6 @@ using AutoMidiPlayer.WPF.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Stylet;
 using StyletIoC;
-using Wpf.Ui.Mvvm.Contracts;
-using Wpf.Ui.Mvvm.Services;
 
 namespace AutoMidiPlayer.WPF;
 
@@ -181,6 +179,6 @@ public class Bootstrapper : Bootstrapper<MainWindowViewModel>
             return player;
         }).InSingletonScope();
 
-        builder.Bind<IThemeService>().To<ThemeService>().InSingletonScope();
+        // Theme service removed in WPF-UI 3.x - use ApplicationThemeManager directly
     }
 }

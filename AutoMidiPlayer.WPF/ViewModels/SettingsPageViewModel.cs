@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using AutoMidiPlayer.Data;
 using AutoMidiPlayer.Data.Entities;
 using AutoMidiPlayer.Data.Git;
@@ -26,8 +27,8 @@ using PropertyChanged;
 using Stylet;
 using StyletIoC;
 using Wpf.Ui.Appearance;
-using Wpf.Ui.Mvvm.Contracts;
 using static AutoMidiPlayer.Data.Entities.Transpose;
+using WpfUiApplicationTheme = Wpf.Ui.Appearance.ApplicationTheme;
 
 namespace AutoMidiPlayer.WPF.ViewModels;
 
@@ -55,15 +56,14 @@ public class SettingsPageViewModel : Screen
     // Theme options for dropdown
     public static List<ThemeOption> ThemeOptions { get; } = new()
     {
-        new("Light", ApplicationTheme.Light),
-        new("Dark", ApplicationTheme.Dark),
+        new("Light", ModernWpf.ApplicationTheme.Light),
+        new("Dark", ModernWpf.ApplicationTheme.Dark),
         new("Use system setting", null)
     };
 
     private static readonly Settings Settings = Settings.Default;
     private readonly IContainer _ioc;
     private readonly IEventAggregator _events;
-    private readonly IThemeService _theme;
     private readonly MainWindowViewModel _main;
     private int _keyOffset;
     private double _speed = 1.0;
@@ -74,7 +74,6 @@ public class SettingsPageViewModel : Screen
     {
         _ioc = ioc;
         _events = ioc.Get<IEventAggregator>();
-        _theme = ioc.Get<IThemeService>();
         _main = main;
 
         // Defer key offset initialization - QueueView may not exist yet
@@ -122,18 +121,112 @@ public class SettingsPageViewModel : Screen
         try
         {
             var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hexColor);
-            ThemeManager.Current.AccentColor = color;
-
-            // Also apply to Wpf.Ui accent for sidebar and other controls
-            Accent.Apply(color);
+            ApplyColorToAllSystems(color);
         }
         catch
         {
             // Fallback to Green if color parsing fails
             var fallbackColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1DB954");
-            ThemeManager.Current.AccentColor = fallbackColor;
-            Accent.Apply(fallbackColor);
+            ApplyColorToAllSystems(fallbackColor);
         }
+    }
+
+    private void ApplyColorToAllSystems(System.Windows.Media.Color color)
+    {
+        // Apply to ModernWpf theme system
+        ThemeManager.Current.AccentColor = color;
+
+        // Create brushes from color
+        var accentBrush = new System.Windows.Media.SolidColorBrush(color);
+        accentBrush.Freeze();
+
+        // Also set SystemAccentColorLight1/2/3 and Dark1/2/3 for more controls
+        var accentLight1 = AdjustColorBrightness(color, 0.15f);
+        var accentLight2 = AdjustColorBrightness(color, 0.30f);
+        var accentLight3 = AdjustColorBrightness(color, 0.45f);
+        var accentDark1 = AdjustColorBrightness(color, -0.15f);
+        var accentDark2 = AdjustColorBrightness(color, -0.30f);
+        var accentDark3 = AdjustColorBrightness(color, -0.45f);
+
+        // Set all SystemAccentColor resources
+        SetOrUpdateResource("SystemAccentColor", color);
+        SetOrUpdateResource("SystemAccentColorLight1", accentLight1);
+        SetOrUpdateResource("SystemAccentColorLight2", accentLight2);
+        SetOrUpdateResource("SystemAccentColorLight3", accentLight3);
+        SetOrUpdateResource("SystemAccentColorDark1", accentDark1);
+        SetOrUpdateResource("SystemAccentColorDark2", accentDark2);
+        SetOrUpdateResource("SystemAccentColorDark3", accentDark3);
+
+        // Set accent brushes that controls bind to
+        var light1Brush = new System.Windows.Media.SolidColorBrush(accentLight1);
+        var light2Brush = new System.Windows.Media.SolidColorBrush(accentLight2);
+        var light3Brush = new System.Windows.Media.SolidColorBrush(accentLight3);
+        var dark1Brush = new System.Windows.Media.SolidColorBrush(accentDark1);
+        var dark2Brush = new System.Windows.Media.SolidColorBrush(accentDark2);
+        var dark3Brush = new System.Windows.Media.SolidColorBrush(accentDark3);
+        light1Brush.Freeze();
+        light2Brush.Freeze();
+        light3Brush.Freeze();
+        dark1Brush.Freeze();
+        dark2Brush.Freeze();
+        dark3Brush.Freeze();
+
+        SetOrUpdateResource("SystemAccentColorBrush", accentBrush);
+        SetOrUpdateResource("SystemAccentColorLight1Brush", light1Brush);
+        SetOrUpdateResource("SystemAccentColorLight2Brush", light2Brush);
+        SetOrUpdateResource("SystemAccentColorLight3Brush", light3Brush);
+        SetOrUpdateResource("SystemAccentColorDark1Brush", dark1Brush);
+        SetOrUpdateResource("SystemAccentColorDark2Brush", dark2Brush);
+        SetOrUpdateResource("SystemAccentColorDark3Brush", dark3Brush);
+
+        // Apply to WPF-UI theme system
+        ApplicationAccentColorManager.Apply(color, ApplicationThemeManager.GetAppTheme(), false);
+
+        // Force WPF-UI to refresh by re-applying theme with the new accent
+        var currentTheme = ApplicationThemeManager.GetAppTheme();
+        ApplicationThemeManager.Apply(currentTheme, Wpf.Ui.Controls.WindowBackdropType.Mica, true);
+
+        // Re-apply accent after theme refresh to ensure it sticks
+        ApplicationAccentColorManager.Apply(color, currentTheme, false);
+
+        // Notify other components that accent color changed
+        _events.Publish(new AccentColorChangedNotification());
+    }
+
+    private static void SetOrUpdateResource(string key, object value)
+    {
+        if (Application.Current.Resources.Contains(key))
+            Application.Current.Resources[key] = value;
+        else
+            Application.Current.Resources.Add(key, value);
+    }
+
+    private static System.Windows.Media.Color AdjustColorBrightness(System.Windows.Media.Color color, float factor)
+    {
+        float r = color.R / 255f;
+        float g = color.G / 255f;
+        float b = color.B / 255f;
+
+        if (factor > 0)
+        {
+            // Lighten
+            r = r + (1 - r) * factor;
+            g = g + (1 - g) * factor;
+            b = b + (1 - b) * factor;
+        }
+        else
+        {
+            // Darken
+            r = r * (1 + factor);
+            g = g * (1 + factor);
+            b = b * (1 + factor);
+        }
+
+        return System.Windows.Media.Color.FromArgb(
+            color.A,
+            (byte)Math.Clamp(r * 255, 0, 255),
+            (byte)Math.Clamp(g * 255, 0, 255),
+            (byte)Math.Clamp(b * 255, 0, 255));
     }
 
     public ThemeOption SelectedTheme
@@ -144,11 +237,11 @@ public class SettingsPageViewModel : Screen
             if (SetAndNotify(ref _selectedTheme, value) && value is not null)
             {
                 ThemeManager.Current.ApplicationTheme = value.Value;
-                _theme.SetTheme(value.Value switch
+                ApplicationThemeManager.Apply(value.Value switch
                 {
-                    ApplicationTheme.Light => ThemeType.Light,
-                    ApplicationTheme.Dark => ThemeType.Dark,
-                    _ => _theme.GetSystemTheme()
+                    ModernWpf.ApplicationTheme.Light => WpfUiApplicationTheme.Light,
+                    ModernWpf.ApplicationTheme.Dark => WpfUiApplicationTheme.Dark,
+                    _ => WpfUiApplicationTheme.Unknown
                 });
                 Settings.Modify(s => s.AppTheme = (int?)value.Value ?? -1);
 
@@ -489,11 +582,11 @@ public class SettingsPageViewModel : Screen
     [SuppressPropertyChangedWarnings]
     public void OnThemeChanged()
     {
-        _theme.SetTheme(ThemeManager.Current.ApplicationTheme switch
+        ApplicationThemeManager.Apply(ThemeManager.Current.ApplicationTheme switch
         {
-            ApplicationTheme.Light => ThemeType.Light,
-            ApplicationTheme.Dark => ThemeType.Dark,
-            _ => _theme.GetSystemTheme()
+            ModernWpf.ApplicationTheme.Light => WpfUiApplicationTheme.Light,
+            ModernWpf.ApplicationTheme.Dark => WpfUiApplicationTheme.Dark,
+            _ => WpfUiApplicationTheme.Unknown
         });
 
         Settings.Modify(s => s.AppTheme = (int?)ThemeManager.Current.ApplicationTheme ?? -1);
@@ -654,9 +747,9 @@ public class AccentColorOption
 public class ThemeOption
 {
     public string Name { get; }
-    public ApplicationTheme? Value { get; }
+    public ModernWpf.ApplicationTheme? Value { get; }
 
-    public ThemeOption(string name, ApplicationTheme? value)
+    public ThemeOption(string name, ModernWpf.ApplicationTheme? value)
     {
         Name = name;
         Value = value;

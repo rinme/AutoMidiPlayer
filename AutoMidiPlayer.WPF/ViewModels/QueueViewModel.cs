@@ -16,10 +16,11 @@ using PropertyChanged;
 using Stylet;
 using StyletIoC;
 using MidiFile = AutoMidiPlayer.Data.Midi.MidiFile;
+using AutoMidiPlayer.Data.Notification;
 
 namespace AutoMidiPlayer.WPF.ViewModels;
 
-public class QueueViewModel : Screen
+public class QueueViewModel : Screen, IHandle<AccentColorChangedNotification>
 {
     public enum LoopMode
     {
@@ -45,6 +46,16 @@ public class QueueViewModel : Screen
 
         // Forward IsPlaying changes from Playback so bindings update
         _main.Playback.PlaybackStateChanged += HandlePlaybackStateChanged;
+
+        // Subscribe to accent color changes
+        _events.Subscribe(this);
+    }
+
+    public void Handle(AccentColorChangedNotification notification)
+    {
+        // Refresh color properties when accent color changes
+        NotifyOfPropertyChange(() => ShuffleStateColor);
+        NotifyOfPropertyChange(() => LoopStateColor);
     }
 
     private void HandlePlaybackStateChanged(object? sender, EventArgs e)
