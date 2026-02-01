@@ -250,6 +250,11 @@ public class SettingsPageViewModel : Screen
         set => Settings.GenshinLocation = value;
     }
 
+    /// <summary>
+    /// Path where application data (database, logs, etc.) is stored
+    /// </summary>
+    public static string DataLocation => AppPaths.AppDataDirectory;
+
     public string Key => $"{KeyOffsets[KeyOffset]}";
 
     // KeyOptions for ComboBox binding - generated from MusicConstants
@@ -452,6 +457,12 @@ public class SettingsPageViewModel : Screen
         MidiFolder = string.Empty;
         Settings.MidiFolder = string.Empty;
         Settings.Save();
+    }
+
+    public void OpenDataFolder()
+    {
+        AppPaths.EnsureDirectoryExists();
+        System.Diagnostics.Process.Start("explorer.exe", AppPaths.AppDataDirectory);
     }
 
     [UsedImplicitly]

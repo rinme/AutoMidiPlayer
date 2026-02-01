@@ -3,20 +3,23 @@ using System.Configuration;
 
 namespace AutoMidiPlayer.Data.Properties;
 
-// This class allows you to handle specific events on the settings class:
-//  The SettingChanging event is raised before a setting's value is changed.
-//  The PropertyChanged event is raised after a setting's value is changed.
-//  The SettingsLoaded event is raised after the setting values are loaded.
-//  The SettingsSaving event is raised before the setting values are saved.
+/// <summary>
+/// Partial class extension for Settings.
+/// Uses PortableSettingsProvider to store all user settings in %LocalAppData%\AutoMidiPlayer\user.config
+/// instead of the versioned .NET default path, allowing settings to persist across updates.
+/// </summary>
+[SettingsProvider(typeof(PortableSettingsProvider))]
 public sealed partial class Settings
 {
     protected override void OnPropertyChanged(object sender, PropertyChangedEventArgs e) => Save();
 
     protected override void OnSettingsLoaded(object sender, SettingsLoadedEventArgs e)
     {
+        // Note: Upgrade() is not needed with PortableSettingsProvider since
+        // settings are stored in a fixed location that persists across versions.
+        // The UpgradeRequired logic is kept for backwards compatibility but won't trigger.
         if (Default.UpgradeRequired)
         {
-            Default.Upgrade();
             Default.UpgradeRequired = false;
             Default.Save();
         }

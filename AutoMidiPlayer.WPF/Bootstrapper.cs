@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -80,16 +79,13 @@ public class Bootstrapper : Bootstrapper<MainWindowViewModel>
 
     protected override void ConfigureIoC(IStyletIoCBuilder builder)
     {
-        var config = ConfigurationManager
-            .OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal);
-
-        var path = Path.GetDirectoryName(config.FilePath);
-        if (!Directory.Exists(path))
-            Directory.CreateDirectory(path!);
+        // Use centralized app data path
+        var path = AppPaths.AppDataDirectory;
+        AppPaths.EnsureDirectoryExists();
 
         builder.Bind<LyreContext>().ToFactory(_ =>
         {
-            var source = Path.Combine(path!, Settings.Default.SqliteConnection);
+            var source = AppPaths.DatabasePath;
 
             var options = new DbContextOptionsBuilder<LyreContext>()
                 .UseSqlite($"Data Source={source}")

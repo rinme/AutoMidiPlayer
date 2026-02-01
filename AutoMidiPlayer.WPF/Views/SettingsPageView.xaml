@@ -140,6 +140,22 @@
                     </modern:SimpleStackPanel>
                 </GroupBox>
 
+                <GroupBox Header="Data Location">
+                    <modern:SimpleStackPanel Orientation="Horizontal">
+                        <Button Command="{s:Action OpenDataFolder}"
+                                Background="Transparent"
+                                ToolTip="Open data folder in Explorer">
+                            <ui:FontIcon Glyph="&#xE838;"
+                                         FontFamily="{StaticResource MdlFontFamily}"/>
+                        </Button>
+                        <TextBlock Text="{x:Static viewModels:SettingsPageViewModel.DataLocation}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   ToolTip="{x:Static viewModels:SettingsPageViewModel.DataLocation}"/>
+                    </modern:SimpleStackPanel>
+                </GroupBox>
+
                 <!-- License Section -->
                 <TextBlock Text="License"
                            Style="{DynamicResource SubtitleTextBlockStyle}"

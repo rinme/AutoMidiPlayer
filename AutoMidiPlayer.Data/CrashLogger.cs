@@ -6,18 +6,13 @@ namespace AutoMidiPlayer.Data;
 
 public static class CrashLogger
 {
-    private static readonly string LogPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "AutoMidiPlayer",
-        "crash_log.txt");
+    private static readonly string LogPath = AppPaths.CrashLogPath;
 
     private static readonly object _lock = new();
 
     static CrashLogger()
     {
-        var dir = Path.GetDirectoryName(LogPath);
-        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
+        AppPaths.EnsureDirectoryExists();
     }
 
     public static void Log(string message, [CallerMemberName] string? caller = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
