@@ -8,7 +8,7 @@ using AutoMidiPlayer.Data.Midi;
 namespace AutoMidiPlayer.WPF.ModernWPF;
 
 /// <summary>
-/// Reusable track list control for displaying MIDI files in a Spotify-style table
+/// Reusable track list control for displaying MIDI files
 /// </summary>
 public partial class TrackListControl : UserControl
 {

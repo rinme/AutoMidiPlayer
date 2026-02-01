@@ -11,30 +11,38 @@
     xmlns:modernWpf="clr-namespace:AutoMidiPlayer.WPF.ModernWPF"
     x:Name="TrackListRoot">
 
-    <Grid>
+    <Grid Grid.IsSharedSizeScope="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Column Headers (Spotify-style) -->
+        <!-- Column Headers -->
         <Border Grid.Row="0"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="0,0,0,1"
-                Padding="0,8,0,8"
+                Padding="0,8,17,8"
                 Margin="0,0,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="48"/>
+                    <ColumnDefinition Width="48"
+                            SharedSizeGroup="Col0"/>
                     <ColumnDefinition Width="*"
                                       MinWidth="150"/>
-                    <ColumnDefinition Width="100"/>
-                    <ColumnDefinition Width="60"/>
-                    <ColumnDefinition Width="50"/>
-                    <ColumnDefinition Width="70"/>
-                    <ColumnDefinition Width="80"/>
-                    <ColumnDefinition Width="60"/>
-                    <ColumnDefinition Width="48"/>
+                    <ColumnDefinition Width="100"
+                            SharedSizeGroup="Col2"/>
+                    <ColumnDefinition Width="60"
+                            SharedSizeGroup="Col3"/>
+                    <ColumnDefinition Width="50"
+                            SharedSizeGroup="Col4"/>
+                    <ColumnDefinition Width="70"
+                            SharedSizeGroup="Col5"/>
+                    <ColumnDefinition Width="80"
+                            SharedSizeGroup="Col6"/>
+                    <ColumnDefinition Width="60"
+                            SharedSizeGroup="Col7"/>
+                    <ColumnDefinition Width="48"
+                            SharedSizeGroup="Col8"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
@@ -76,7 +84,7 @@
             </Grid>
         </Border>
 
-        <!-- Track List (Spotify-style rows) -->
+        <!-- Track List -->
         <ListView x:Name="TrackListView"
                   Grid.Row="1"
                   Margin="0,0,0,5"
@@ -86,7 +94,8 @@
                   BorderThickness="0"
                   Background="Transparent"
                   AllowDrop="{Binding AllowReorder, ElementName=TrackListRoot}"
-                  PreviewMouseDoubleClick="TrackListView_PreviewMouseDoubleClick">
+                  PreviewMouseDoubleClick="TrackListView_PreviewMouseDoubleClick"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListView.ItemTemplate>
                 <DataTemplate DataType="midi:MidiFile">
                     <Border x:Name="RowBorder"
@@ -97,16 +106,24 @@
                             Background="Transparent">
                         <Grid x:Name="RowGrid">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="48"/>
+                                <ColumnDefinition Width="48"
+                                        SharedSizeGroup="Col0"/>
                                 <ColumnDefinition Width="*"
                                                   MinWidth="150"/>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition Width="60"/>
-                                <ColumnDefinition Width="50"/>
-                                <ColumnDefinition Width="70"/>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="60"/>
-                                <ColumnDefinition Width="48"/>
+                                <ColumnDefinition Width="100"
+                                        SharedSizeGroup="Col2"/>
+                                <ColumnDefinition Width="60"
+                                        SharedSizeGroup="Col3"/>
+                                <ColumnDefinition Width="50"
+                                        SharedSizeGroup="Col4"/>
+                                <ColumnDefinition Width="70"
+                                        SharedSizeGroup="Col5"/>
+                                <ColumnDefinition Width="80"
+                                        SharedSizeGroup="Col6"/>
+                                <ColumnDefinition Width="60"
+                                        SharedSizeGroup="Col7"/>
+                                <ColumnDefinition Width="48"
+                                        SharedSizeGroup="Col8"/>
                             </Grid.ColumnDefinitions>
 
                             <!-- # Position / Equalizer when playing / Play Button on hover -->
@@ -195,32 +212,34 @@
                                         Visibility="Collapsed"
                                         Background="Transparent"
                                         BorderThickness="0"
-                                        Padding="8,4"
-                                        MinWidth="32"
-                                        MinHeight="32"
+                                        Padding="4,2"
+                                        MinWidth="24"
+                                        MinHeight="24"
                                         VerticalAlignment="Center"
                                         HorizontalAlignment="Center"
                                         Focusable="False"
                                         PreviewMouseLeftButtonDown="PlayPauseButton_PreviewMouseDown"
                                         Tag="{Binding}"
                                         ToolTip="Play">
-                                    <ui:FontIcon x:Name="PlayPauseIcon"
-                                                 FontFamily="{StaticResource MdlFontFamily}"
-                                                 FontSize="14">
-                                        <ui:FontIcon.Glyph>
-                                            <MultiBinding Converter="{x:Static modernWpf:PlayPauseGlyphConverter.Instance}">
+                                    <Path x:Name="PlayPauseIcon"
+                                          Stretch="Uniform"
+                                          Width="10"
+                                          Height="10"
+                                          Fill="{DynamicResource TextFillColorPrimaryBrush}">
+                                        <Path.Data>
+                                            <MultiBinding Converter="{x:Static modernWpf:PlayPauseGeometryConverter.Instance}">
                                                 <Binding/>
                                                 <Binding Path="OpenedFile"
                                                          RelativeSource="{RelativeSource AncestorType=modernWpf:TrackListControl}"/>
                                                 <Binding Path="IsPlaying"
                                                          RelativeSource="{RelativeSource AncestorType=modernWpf:TrackListControl}"/>
                                             </MultiBinding>
-                                        </ui:FontIcon.Glyph>
-                                    </ui:FontIcon>
+                                        </Path.Data>
+                                    </Path>
                                 </Button>
                             </Grid>
 
-                            <!-- Album Art + Title + Author (Spotify-style) -->
+                            <!-- Album Art + Title + Author -->
                             <Grid Grid.Column="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -326,10 +345,12 @@
                                     ToolTip="More options"
                                     PreviewMouseLeftButtonDown="MenuButton_PreviewMouseDown"
                                     Tag="{Binding}">
-                                <ui:FontIcon Glyph="&#xE712;"
-                                             FontFamily="{StaticResource MdlFontFamily}"
-                                             FontSize="14"
-                                             Opacity="0.6"/>
+                                <Path Data="{StaticResource MenuIconGeometry}"
+                                      Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                      Stretch="Uniform"
+                                      Width="14"
+                                      Height="14"
+                                      Opacity="0.6"/>
                             </Button>
                         </Grid>
                     </Border>
@@ -404,13 +425,13 @@
                             Value="Transparent"/>
                     <Style.Triggers>
                         <Trigger Property="IsMouseOver"
-                                Value="True">
+                                 Value="True">
                             <Setter Property="Background"
                                     Value="Transparent"/>
                         </Trigger>
                         <!-- Show buttons when item is selected -->
                         <Trigger Property="IsSelected"
-                                Value="True">
+                                 Value="True">
                             <Setter Property="Background"
                                     Value="Transparent"/>
                         </Trigger>

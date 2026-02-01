@@ -149,12 +149,12 @@
 			</Border>
 		</Grid>
 
-		<!-- Fixed Bottom Player Controls (Spotify-style) -->
+		<!-- Fixed Bottom Player Controls -->
 		<Border Grid.Row="2"
 				Background="{ui:ThemeResource ControlFillColorDefaultBrush}"
 				BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
 				BorderThickness="0,1,0,0"
-				Padding="16,12">
+				Padding="24,16">
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"
@@ -168,13 +168,13 @@
 				<StackPanel Grid.Column="0"
 							Orientation="Horizontal"
 							VerticalAlignment="Center">
-					<Border Width="56"
-							Height="56"
+					<Border Width="48"
+							Height="48"
 							CornerRadius="4"
 							Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
 						<ui:FontIcon Glyph="&#xEC4F;"
 									 FontFamily="{StaticResource MdlFontFamily}"
-									 FontSize="24"/>
+									 FontSize="20"/>
 					</Border>
 					<StackPanel Margin="12,0,0,0"
 								VerticalAlignment="Center">
@@ -197,15 +197,16 @@
 					<!-- Control Buttons -->
 					<modern:SimpleStackPanel Orientation="Horizontal"
 											 HorizontalAlignment="Center"
-											 Spacing="4">
+											 Spacing="12">
 						<Button s:View.ActionTarget="{Binding TrackView.Queue}"
 								Command="{s:Action ToggleShuffle}"
 								Style="{StaticResource PlayerControlButton}"
 								ToolTip="Shuffle">
-							<ui:FontIcon Glyph="&#xE14B;"
-										 FontFamily="{StaticResource MdlFontFamily}"
-										 FontSize="14"
-										 Foreground="{Binding TrackView.Queue.ShuffleStateColor}"/>
+							<Path Data="{StaticResource ShuffleIconGeometry}"
+								  Fill="{Binding TrackView.Queue.ShuffleStateColor}"
+								  Style="{StaticResource PlayerControlIcon}"
+								  Width="14"
+								  Height="14"/>
 						</Button>
 
 						<Button s:View.ActionTarget="{Binding Playback}"
@@ -213,9 +214,10 @@
 								IsHitTestVisible="{Binding Playback.CanHitPrevious}"
 								Style="{StaticResource PlayerControlButton}"
 								ToolTip="Previous">
-							<ui:FontIcon Glyph="&#xE892;"
-										 FontFamily="{StaticResource MdlFontFamily}"
-										 FontSize="16"/>
+							<Path Data="{StaticResource PreviousIconGeometry}"
+								  Style="{StaticResource PlayerControlIconNav}"
+								  Width="14"
+								  Height="14"/>
 						</Button>
 
 						<Button s:View.ActionTarget="{Binding Playback}"
@@ -223,10 +225,12 @@
 								IsHitTestVisible="{Binding Playback.CanHitPlayPause}"
 								Style="{StaticResource PlayPauseButton}"
 								ToolTip="{Binding Playback.PlayPauseTooltip}">
-							<ui:FontIcon Glyph="{Binding Playback.PlayPauseIcon}"
-										 FontFamily="{StaticResource MdlFontFamily}"
-										 FontSize="16"
-										 Foreground="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+							<Path Data="{Binding Playback.PlayPauseGeometry}"
+								  Fill="{DynamicResource SystemControlBackgroundAltHighBrush}"
+								  Style="{StaticResource PlayerControlIcon}"
+								  Margin="1,0,0,0"
+								  Width="14"
+								  Height="14"/>
 						</Button>
 
 						<Button s:View.ActionTarget="{Binding Playback}"
@@ -234,18 +238,22 @@
 								IsHitTestVisible="{Binding Playback.CanHitNext}"
 								Style="{StaticResource PlayerControlButton}"
 								ToolTip="Next">
-							<ui:FontIcon Glyph="&#xE893;"
-										 FontFamily="{StaticResource MdlFontFamily}"
-										 FontSize="16"/>
+							<Path Data="{StaticResource NextIconGeometry}"
+								  Style="{StaticResource PlayerControlIconNav}"
+								  Width="14"
+								  Height="14"/>
 						</Button>
 
 						<Button s:View.ActionTarget="{Binding TrackView.Queue}"
 								Command="{s:Action ToggleLoop}"
 								Style="{StaticResource PlayerControlButton}"
 								ToolTip="{Binding TrackView.Queue.LoopTooltip}">
-							<ui:FontIcon Glyph="{Binding TrackView.Queue.LoopStateString}"
-										 FontFamily="{StaticResource MdlFontFamily}"
-										 FontSize="14"/>
+							<Path Data="{Binding TrackView.Queue.LoopGeometry}"
+								  Fill="{Binding TrackView.Queue.LoopStateColor}"
+								  Style="{StaticResource PlayerControlIcon}"
+								  VerticalAlignment="Bottom"
+								  Width="14"
+								  Height="14"/>
 						</Button>
 					</modern:SimpleStackPanel>
 

@@ -33,14 +33,16 @@
                 <ui:TextBox PlaceholderText="Search songs..."
                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                             Width="250"
+                            Icon="Search12"
                             VerticalAlignment="Center"/>
                 <Button Command="{s:Action OpenFile}"
                         Background="Transparent"
                         Padding="8"
                         ToolTip="Import MIDI files">
-                    <ui:FontIcon Glyph="&#xE710;"
-                                 FontFamily="{StaticResource MdlFontFamily}"
-                                 FontSize="16"/>
+                    <Path Data="{StaticResource AddIconGeometry}"
+                          Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                          Stretch="Uniform"
+                          Width="16" Height="16"/>
                 </Button>
                 <Button Command="{s:Action ShowMissingFilesDialog}"
                         Background="Transparent"
@@ -102,26 +104,29 @@
                     <MenuItem Header="Add to Queue"
                               Click="AddToQueue_Click">
                         <MenuItem.Icon>
-                            <ui:FontIcon Glyph="&#xE710;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="12"/>
+                            <Path Data="{StaticResource AddQueueIconGeometry}"
+                                  Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="12" Height="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="Edit"
                               Click="EditSong_Click">
                         <MenuItem.Icon>
-                            <ui:FontIcon Glyph="&#xE70F;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="12"/>
+                            <Path Data="{StaticResource EditIconGeometry}"
+                                  Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="12" Height="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
                     <MenuItem Header="Delete"
                               Click="DeleteSong_Click">
                         <MenuItem.Icon>
-                            <ui:FontIcon Glyph="&#xE74D;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="12"/>
+                            <Path Data="{StaticResource DeleteIconGeometry}"
+                                  Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="12" Height="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </ContextMenu>

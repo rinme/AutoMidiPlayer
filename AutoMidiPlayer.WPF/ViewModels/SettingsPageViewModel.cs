@@ -37,10 +37,10 @@ public class SettingsPageViewModel : Screen
     public static Dictionary<Transpose, string> TransposeNames => MusicConstants.TransposeNames;
     public static Dictionary<Transpose, string> TransposeTooltips => MusicConstants.TransposeTooltips;
 
-    // Predefined accent colors (Spotify green is first/default)
+    // Predefined accent colors (Green is first/default)
     public static List<AccentColorOption> AccentColors { get; } = new()
     {
-        new("Spotify Green", "#1DB954"),
+        new("Green", "#1DB954"),
         new("Blue", "#0078D4"),
         new("Purple", "#8B5CF6"),
         new("Red", "#EF4444"),
@@ -91,7 +91,7 @@ public class SettingsPageViewModel : Screen
 
         // Initialize accent color from settings
         _selectedAccentColor = AccentColors.FirstOrDefault(c => c.ColorHex == Settings.AccentColor)
-            ?? AccentColors[0]; // Default to Spotify Green
+            ?? AccentColors[0]; // Default to Green
         ApplyAccentColor(_selectedAccentColor.ColorHex);
 
         // Initialize instrument from settings
@@ -129,7 +129,7 @@ public class SettingsPageViewModel : Screen
         }
         catch
         {
-            // Fallback to Spotify green if color parsing fails
+            // Fallback to Green if color parsing fails
             var fallbackColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1DB954");
             ThemeManager.Current.AccentColor = fallbackColor;
             Accent.Apply(fallbackColor);

@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
 using Windows.Media;
 using Windows.Media.Playback;
 using AutoMidiPlayer.Data;
@@ -18,6 +20,7 @@ using Stylet;
 using StyletIoC;
 using static AutoMidiPlayer.WPF.ViewModels.SettingsPageViewModel;
 using MidiFile = AutoMidiPlayer.Data.Midi.MidiFile;
+using WinMediaPlayer = Windows.Media.Playback.MediaPlayer;
 
 namespace AutoMidiPlayer.WPF.Services;
 
@@ -35,7 +38,7 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
     private readonly IContainer _ioc;
     private readonly IEventAggregator _events;
     private readonly MainWindowViewModel _main;
-    private readonly MediaPlayer? _player;
+    private readonly WinMediaPlayer? _player;
     private readonly OutputDevice? _speakers;
     private readonly PlaybackCurrentTimeWatcher _timeWatcher;
 
@@ -64,7 +67,7 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
         if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
             Environment.OSVersion.Version.Major >= 10)
         {
-            _player = ioc.Get<MediaPlayer>();
+            _player = ioc.Get<WinMediaPlayer>();
 
             _player!.CommandManager.NextReceived += (_, _) => Next();
             _player!.CommandManager.PreviousReceived += (_, _) => Previous();
@@ -139,6 +142,12 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
     public bool CanHitPrevious => CurrentTime > TimeSpan.FromSeconds(3) || Queue.History.Count > 1;
 
     public string PlayPauseIcon => IsPlaying ? PauseIcon : PlayIcon;
+
+    public string PlayPauseSvgSource => IsPlaying ? "/Icons/Controls/Pause.svg" : "/Icons/Controls/Play.svg";
+
+    public Geometry PlayPauseGeometry => IsPlaying
+        ? (Geometry)Application.Current.FindResource("PauseIconGeometry")
+        : (Geometry)Application.Current.FindResource("PlayIconGeometry");
 
     public string PlayPauseTooltip => IsPlaying ? "Pause" : "Play";
 
@@ -506,6 +515,8 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
         // Notify UI of property changes
         NotifyOfPropertyChange(nameof(IsPlaying));
         NotifyOfPropertyChange(nameof(PlayPauseIcon));
+        NotifyOfPropertyChange(nameof(PlayPauseSvgSource));
+        NotifyOfPropertyChange(nameof(PlayPauseGeometry));
         NotifyOfPropertyChange(nameof(PlayPauseTooltip));
         NotifyOfPropertyChange(nameof(CanHitPlayPause));
         NotifyOfPropertyChange(nameof(CanHitNext));

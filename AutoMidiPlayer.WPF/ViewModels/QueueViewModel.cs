@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using AutoMidiPlayer.Data;
 using AutoMidiPlayer.Data.Entities;
@@ -92,6 +93,29 @@ public class QueueViewModel : Screen
             LoopMode.Queue => "\xE8EE",  // Repeat all icon
             LoopMode.Track => "\xE8ED",  // Repeat one icon
             _ => string.Empty
+        };
+
+    public string LoopSvgSource =>
+        Loop switch
+        {
+            LoopMode.Off => "/Icons/Controls/Repeat.svg",
+            LoopMode.Queue => "/Icons/Controls/Repeat.svg",
+            LoopMode.Track => "/Icons/Controls/Repeat One.svg",
+            _ => "/Icons/Controls/Repeat.svg"
+        };
+
+    public Geometry LoopGeometry =>
+        Loop switch
+        {
+            LoopMode.Track => (Geometry)Application.Current.FindResource("RepeatOneIconGeometry"),
+            _ => (Geometry)Application.Current.FindResource("RepeatIconGeometry")
+        };
+
+    public SolidColorBrush LoopStateColor =>
+        Loop switch
+        {
+            LoopMode.Off => Brushes.Gray,
+            _ => new SolidColorBrush(ThemeManager.Current.ActualAccentColor)
         };
 
     public string LoopTooltip =>

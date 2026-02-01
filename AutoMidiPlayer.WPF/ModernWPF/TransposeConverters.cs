@@ -206,6 +206,38 @@ public class PlayPauseGlyphConverter : IMultiValueConverter
 }
 
 /// <summary>
+/// Multi-value converter that returns the appropriate play/pause Geometry.
+/// Returns pause geometry if this row's file is playing, play geometry otherwise.
+/// Values: [0] = MidiFile (row), [1] = MidiFile (opened), [2] = bool (IsPlaying)
+/// </summary>
+public class PlayPauseGeometryConverter : IMultiValueConverter
+{
+    public static PlayPauseGeometryConverter Instance { get; } = new();
+
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool showPause = false;
+
+        if (values.Length >= 3 &&
+            values[0] is MidiFile rowFile &&
+            values[1] is MidiFile openedFile &&
+            values[2] is bool isPlaying)
+        {
+            // If this file is currently playing, show pause icon
+            showPause = rowFile == openedFile && isPlaying;
+        }
+
+        var resourceKey = showPause ? "PauseIconGeometry" : "PlayIconGeometry";
+        return Application.Current.FindResource(resourceKey) as Geometry ?? Geometry.Empty;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
 /// Converter to get the 1-based display index of an item in a list.
 /// Values[0]: The MidiFile of the row
 /// Values[1]: The ItemsSource collection

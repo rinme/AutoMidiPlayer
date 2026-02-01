@@ -33,6 +33,7 @@
                 <ui:TextBox PlaceholderText="Filter queue..."
                             Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                             Width="250"
+                            Icon="Search12"
                             VerticalAlignment="Center"/>
                 <TextBlock Margin="10,0"
                            VerticalAlignment="Center"
@@ -69,26 +70,32 @@
                     <MenuItem Header="Remove from Queue"
                               Click="RemoveFromQueue_Click">
                         <MenuItem.Icon>
-                            <ui:FontIcon Glyph="&#xE738;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="12"/>
+                            <Path Data="{StaticResource RemoveCircleIconGeometry}"
+                                  Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="12"
+                                    Height="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="Edit"
                               Click="EditSong_Click">
                         <MenuItem.Icon>
-                            <ui:FontIcon Glyph="&#xE70F;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="12"/>
+                            <Path Data="{StaticResource EditIconGeometry}"
+                                  Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="12"
+                                    Height="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
                     <MenuItem Header="Delete"
                               Click="DeleteSong_Click">
                         <MenuItem.Icon>
-                            <ui:FontIcon Glyph="&#xE74D;"
-                                         FontFamily="{StaticResource MdlFontFamily}"
-                                         FontSize="12"/>
+                            <Path Data="{StaticResource DeleteIconGeometry}"
+                                  Fill="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="12"
+                                    Height="12"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </ContextMenu>
