@@ -27,6 +27,7 @@ namespace AutoMidiPlayer.WPF.ViewModels;
 public class TrackViewModel : Screen,
     IHandle<MidiFile>, IHandle<MidiTrack>,
     IHandle<SettingsPageViewModel>,
+    IHandle<InstrumentViewModel>,
     IHandle<MergeNotesNotification>,
     IHandle<PlayTimerNotification>
 {
@@ -38,7 +39,6 @@ public class TrackViewModel : Screen,
     private readonly OutputDevice? _speakers;
     private readonly PlaybackCurrentTimeWatcher _timeWatcher;
     private bool _ignoreSliderChange;
-    private InputDevice? _inputDevice;
     private TimeSpan _songPosition;
     private double? _savedPosition;
     private int _savePositionCounter;
@@ -52,8 +52,6 @@ public class TrackViewModel : Screen,
 
         _events = ioc.Get<IEventAggregator>();
         _events.Subscribe(this);
-
-        SelectedMidiInput = MidiInputs[0];
 
         _timeWatcher.CurrentTimeChanged += OnSongTick;
 
@@ -79,15 +77,10 @@ public class TrackViewModel : Screen,
         {
             new ErrorContentDialog(e, closeText: "Ignore").ShowAsync();
 
-            SettingsPage.CanUseSpeakers = false;
+            // Note: CanUseSpeakers will be set in InstrumentViewModel
             Settings.UseSpeakers = false;
         }
     }
-
-    public BindableCollection<MidiInput> MidiInputs { get; } = new()
-    {
-        new("None")
-    };
 
     public BindableCollection<MidiTrack> MidiTracks { get; } = new();
 
@@ -125,8 +118,6 @@ public class TrackViewModel : Screen,
         set => SetAndNotify(ref _songPosition, TimeSpan.FromSeconds(value));
     }
 
-    public MidiInput? SelectedMidiInput { get; set; }
-
     public Playback? Playback { get; private set; }
 
     public QueueViewModel Queue => _main.QueueView;
@@ -141,10 +132,55 @@ public class TrackViewModel : Screen,
 
     public TimeSpan MaximumTime => Queue.OpenedFile?.Duration ?? TimeSpan.Zero;
 
+    /// <summary>
+    /// Total number of notes across all enabled tracks
+    /// </summary>
+    public int TotalNotes => MidiTracks.Where(t => t.IsChecked).Sum(t => t.NotesCount);
+
+    /// <summary>
+    /// Number of notes that are playable with current instrument settings
+    /// </summary>
+    public int AccessibleNotes
+    {
+        get
+        {
+            var instrument = InstrumentPage.SelectedInstrument.Key;
+            var keyOffset = SettingsPage.KeyOffset;
+            var transpose = SettingsPage.Transpose?.Key;
+            var availableNotes = Keyboard.GetNotes(instrument);
+
+            return MidiTracks
+                .Where(t => t.IsChecked)
+                .SelectMany(t => t.Track.GetNotes())
+                .Count(note =>
+                {
+                    var noteId = note.NoteNumber - keyOffset;
+
+                    // If transpose is set, check if the note can be transposed to fit
+                    if (Settings.TransposeNotes && transpose is not null)
+                    {
+                        var transposed = LyrePlayer.TransposeNote(instrument, ref noteId, transpose.Value);
+                        return availableNotes.Contains(transposed);
+                    }
+
+                    return availableNotes.Contains(noteId);
+                });
+        }
+    }
+
+    /// <summary>
+    /// Display string showing accessible notes vs total notes
+    /// </summary>
+    public string NotesStatsDisplay => TotalNotes > 0
+        ? $"{AccessibleNotes:N0} / {TotalNotes:N0} notes playable ({(double)AccessibleNotes / TotalNotes * 100:F1}%)"
+        : "No notes";
+
     private MusicDisplayProperties? Display =>
         _player?.SystemMediaTransportControls.DisplayUpdater.MusicProperties;
 
     private SettingsPageViewModel SettingsPage => _main.SettingsView;
+
+    private InstrumentViewModel InstrumentPage => _main.InstrumentView;
 
     private static string PauseIcon => "\xEDB4";
 
@@ -225,6 +261,11 @@ public class TrackViewModel : Screen,
         file.InitializeMidi();
         InitializeTracks();
         await InitializePlayback();
+
+        // Update note statistics for new file
+        NotifyOfPropertyChange(() => TotalNotes);
+        NotifyOfPropertyChange(() => AccessibleNotes);
+        NotifyOfPropertyChange(() => NotesStatsDisplay);
     }
 
     public async void Handle(MidiTrack track)
@@ -242,6 +283,11 @@ public class TrackViewModel : Screen,
             db.Songs.Update(Queue.OpenedFile.Song);
             await db.SaveChangesAsync();
         }
+
+        // Update note statistics
+        NotifyOfPropertyChange(() => TotalNotes);
+        NotifyOfPropertyChange(() => AccessibleNotes);
+        NotifyOfPropertyChange(() => NotesStatsDisplay);
 
         // Save current playback state before reinitializing
         var wasPlaying = Playback?.IsRunning ?? false;
@@ -266,6 +312,11 @@ public class TrackViewModel : Screen,
 
     public async void Handle(SettingsPageViewModel message)
     {
+        // Update note statistics when settings change
+        NotifyOfPropertyChange(() => TotalNotes);
+        NotifyOfPropertyChange(() => AccessibleNotes);
+        NotifyOfPropertyChange(() => NotesStatsDisplay);
+
         // Save current playback state before reinitializing
         var wasPlaying = Playback?.IsRunning ?? false;
 
@@ -279,6 +330,14 @@ public class TrackViewModel : Screen,
         {
             Playback.Start();
         }
+    }
+
+    public void Handle(InstrumentViewModel message)
+    {
+        // Update note statistics when instrument settings change
+        NotifyOfPropertyChange(() => TotalNotes);
+        NotifyOfPropertyChange(() => AccessibleNotes);
+        NotifyOfPropertyChange(() => NotesStatsDisplay);
     }
 
     public void OpenFile()
@@ -374,20 +433,6 @@ public class TrackViewModel : Screen,
             await PlayPause();
     }
 
-    public void OnSelectedMidiInputChanged()
-    {
-        _inputDevice?.Dispose();
-
-        if (SelectedMidiInput?.DeviceName is not null
-            && SelectedMidiInput.DeviceName != "None")
-        {
-            _inputDevice = InputDevice.GetByName(SelectedMidiInput.DeviceName);
-
-            _inputDevice!.EventReceived += OnNoteEvent;
-            _inputDevice!.StartEventsListening();
-        }
-    }
-
     public void OnSongPositionChanged()
     {
         NotifyOfPropertyChange(() => CurrentTime);
@@ -438,19 +483,6 @@ public class TrackViewModel : Screen,
         }
         else
             Queue.Previous();
-    }
-
-    public void RefreshDevices()
-    {
-        MidiInputs.Clear();
-        MidiInputs.Add(new("None"));
-
-        foreach (var device in InputDevice.GetAll())
-        {
-            MidiInputs.Add(new(device.Name));
-        }
-
-        SelectedMidiInput = MidiInputs[0];
     }
 
     public void UpdateButtons()
@@ -646,8 +678,8 @@ public class TrackViewModel : Screen,
     {
         try
         {
-            var layout = SettingsPage.SelectedLayout.Key;
-            var instrument = SettingsPage.SelectedInstrument.Key;
+            var layout = InstrumentPage.SelectedLayout.Key;
+            var instrument = InstrumentPage.SelectedInstrument.Key;
             var note = ApplyNoteSettings(instrument, noteEvent.NoteNumber);
 
             // Trigger glow effect on tracks containing this note (only for NoteOn and when view is active)

@@ -1,0 +1,143 @@
+<UserControl
+    x:Class="AutoMidiPlayer.WPF.Views.InstrumentView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    mc:Ignorable="d"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:modern="http://schemas.modernwpf.com/2019"
+    xmlns:s="https://github.com/canton7/Stylet"
+    xmlns:core="clr-namespace:AutoMidiPlayer.WPF.Core"
+    xmlns:viewModels="clr-namespace:AutoMidiPlayer.WPF.ViewModels"
+    xmlns:properties="clr-namespace:AutoMidiPlayer.Data.Properties;assembly=AutoMidiPlayer.Data"
+    d:DataContext="{d:DesignInstance Type=viewModels:InstrumentViewModel}">
+    <UserControl.Resources>
+        <properties:Settings x:Key="Settings"/>
+    </UserControl.Resources>
+
+    <ScrollViewer>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Column -->
+            <modern:SimpleStackPanel Grid.Column="0"
+                                     Margin="0,0,10,0">
+
+                <!-- Instrument Section -->
+                <TextBlock Text="Instrument"
+                           Style="{DynamicResource SubtitleTextBlockStyle}"
+                           Margin="0,0,0,8"/>
+
+                <GroupBox Header="Game Instrument">
+                    <ComboBox
+                        ItemsSource="{x:Static core:Keyboard.InstrumentNames}"
+                        SelectedItem="{Binding SelectedInstrument}"
+                        SelectedIndex="{Binding Default.SelectedInstrument, Source={StaticResource Settings}}"
+                        DisplayMemberPath="Value"
+                        MinWidth="200"/>
+                </GroupBox>
+
+                <GroupBox Header="Keyboard Layout">
+                    <ComboBox
+                        ItemsSource="{x:Static core:Keyboard.LayoutNames}"
+                        SelectedItem="{Binding SelectedLayout}"
+                        SelectedIndex="{Binding Default.SelectedLayout, Source={StaticResource Settings}}"
+                        DisplayMemberPath="Value"
+                        MinWidth="200"/>
+                </GroupBox>
+
+                <!-- Test Section -->
+                <TextBlock Text="Test"
+                           Style="{DynamicResource SubtitleTextBlockStyle}"
+                           Margin="0,16,0,8"/>
+
+                <modern:SimpleStackPanel Orientation="Horizontal"
+                                         Spacing="20">
+                    <modern:ToggleSwitch
+                        Header="Test Mode (Speakers)"
+                        IsEnabled="{Binding CanUseSpeakers}"
+                        IsOn="{Binding Default.UseSpeakers, Source={StaticResource Settings}}"/>
+                    <Button Command="{s:Action TestInstrument}"
+                            Content="Test Instrument"
+                            Padding="16,8"/>
+                </modern:SimpleStackPanel>
+
+                <!-- Timer Section -->
+                <TextBlock Text="Timer"
+                           Style="{DynamicResource SubtitleTextBlockStyle}"
+                           Margin="0,16,0,8"/>
+
+                <GroupBox Header="Scheduled Playback">
+                    <modern:SimpleStackPanel Orientation="Horizontal">
+                        <modern:SimpleStackPanel.Resources>
+                            <Style TargetType="Button"
+                                   BasedOn="{StaticResource {x:Type Button}}"/>
+                        </modern:SimpleStackPanel.Resources>
+                        <modern:SimpleTimePicker SelectedDateTime="{Binding DateTime}"
+                                                 IsEnabled="{Binding CanChangeTime}"/>
+                        <Button Command="{s:Action SetTimeToNow}"
+                                IsEnabled="{Binding CanChangeTime}">Now</Button>
+                        <Button Command="{s:Action StartStopTimer}"
+                                Content="{Binding TimerText}"/>
+                    </modern:SimpleStackPanel>
+                </GroupBox>
+            </modern:SimpleStackPanel>
+
+            <!-- Right Column -->
+            <modern:SimpleStackPanel Grid.Column="1"
+                                     Margin="10,0,0,0">
+
+                <!-- MIDI Input Section -->
+                <TextBlock Text="MIDI Input"
+                           Style="{DynamicResource SubtitleTextBlockStyle}"
+                           Margin="0,0,0,8"/>
+
+                <GroupBox Header="Physical MIDI Instrument">
+                    <modern:SimpleStackPanel Orientation="Horizontal">
+                        <ComboBox
+                            ItemsSource="{Binding MidiInputs}"
+                            SelectedItem="{Binding SelectedMidiInput}"
+                            DisplayMemberPath="DeviceName"
+                            MinWidth="200"/>
+                        <Button Command="{s:Action RefreshDevices}"
+                                ToolTip="Refresh MIDI devices"
+                                Background="Transparent">
+                            <ui:FontIcon Glyph="&#xE72C;"
+                                         FontFamily="{StaticResource MdlFontFamily}"/>
+                        </Button>
+                    </modern:SimpleStackPanel>
+                </GroupBox>
+
+                <TextBlock Text="Connect a physical MIDI keyboard or controller to use it as input."
+                           TextWrapping="Wrap"
+                           Opacity="0.6"
+                           FontSize="12"
+                           Margin="0,8,0,0"/>
+
+                <!-- Advanced Section -->
+                <TextBlock Text="Advanced"
+                           Style="{DynamicResource SubtitleTextBlockStyle}"
+                           Margin="0,16,0,8"/>
+
+                <modern:ToggleSwitch
+                    Header="Use Direct Input (recommended)"
+                    IsOn="{Binding UseDirectInput}"
+                    ToolTip="Uses Win32 SendInput for better game compatibility. Disable only if experiencing issues."/>
+
+                <modern:ToggleSwitch
+                    Header="Hold notes"
+                    IsOn="{Binding Default.HoldNotes, Source={StaticResource Settings}}"/>
+
+                <TextBlock Text="Direct Input uses low-level Windows API for better compatibility with games. Disable this if notes are not being detected correctly."
+                           TextWrapping="Wrap"
+                           Opacity="0.6"
+                           FontSize="12"
+                           Margin="0,8,0,0"/>
+            </modern:SimpleStackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

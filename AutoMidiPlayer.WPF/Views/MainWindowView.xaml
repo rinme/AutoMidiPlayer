@@ -98,6 +98,10 @@
 									   Icon="BookOpenMicrophone20"
 									   PageType="{x:Type pages:PianoSheetView}"
 									   Tag="{Binding PianoSheetView}"/>
+					<ui:NavigationItem Content="Instrument"
+									   Icon="MusicNote2Play20"
+									   PageType="{x:Type pages:InstrumentView}"
+									   Tag="{Binding InstrumentView}"/>
 					<ui:NavigationItem Content="Queue"
 									   Icon="TextBulletListSquareSearch20"
 									   PageType="{x:Type pages:QueueView}"

@@ -43,6 +43,7 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
         SongsView = new(ioc, this);
         SettingsView = new(ioc, this);
         PianoSheetView = new(this);
+        InstrumentView = new(ioc, this);
     }
 
     public void Handle(MidiFile message)
@@ -70,6 +71,8 @@ public class MainWindowViewModel : Conductor<IScreen>, IHandle<MidiFile>
     public QueueViewModel QueueView { get; }
 
     public SettingsPageViewModel SettingsView { get; }
+
+    public InstrumentViewModel InstrumentView { get; }
 
     public string Title { get; set; }
 

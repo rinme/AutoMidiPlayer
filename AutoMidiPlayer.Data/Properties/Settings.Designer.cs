@@ -408,5 +408,20 @@ namespace AutoMidiPlayer.Data.Properties
                 this["AccentColor"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseDirectInput
+        {
+            get
+            {
+                return ((bool)(this["UseDirectInput"]));
+            }
+            set
+            {
+                this["UseDirectInput"] = value;
+            }
+        }
     }
 }

@@ -38,17 +38,6 @@
                 <modern:SimpleStackPanel Orientation="Horizontal"
                                          Spacing="20">
                     <modern:ToggleSwitch
-                        Header="Test Mode (Speakers)"
-                        IsEnabled="{Binding CanUseSpeakers}"
-                        IsOn="{Binding Default.UseSpeakers, Source={StaticResource Settings}}"/>
-                    <modern:ToggleSwitch
-                        Header="Hold notes"
-                        IsOn="{Binding Default.HoldNotes, Source={StaticResource Settings}}"/>
-                </modern:SimpleStackPanel>
-
-                <modern:SimpleStackPanel Orientation="Horizontal"
-                                         Spacing="20">
-                    <modern:ToggleSwitch
                         Header="Merge nearby notes"
                         IsOn="{Binding MergeNotes}"/>
                     <modern:NumberBox
@@ -57,41 +46,6 @@
                         Value="{Binding MergeMilliseconds}"
                         MinWidth="100"/>
                 </modern:SimpleStackPanel>
-
-                <modern:SimpleStackPanel Orientation="Horizontal"
-                                         Spacing="10">
-                    <GroupBox Header="Layout">
-                        <ComboBox
-                            ItemsSource="{x:Static core:Keyboard.LayoutNames}"
-                            SelectedItem="{Binding SelectedLayout}"
-                            SelectedIndex="{Binding Default.SelectedLayout, Source={StaticResource Settings}}"
-                            DisplayMemberPath="Value"
-                            MinWidth="120"/>
-                    </GroupBox>
-                    <GroupBox Header="Instrument">
-                        <ComboBox
-                            ItemsSource="{x:Static core:Keyboard.InstrumentNames}"
-                            SelectedItem="{Binding SelectedInstrument}"
-                            SelectedIndex="{Binding Default.SelectedInstrument, Source={StaticResource Settings}}"
-                            DisplayMemberPath="Value"
-                            MinWidth="150"/>
-                    </GroupBox>
-                </modern:SimpleStackPanel>
-
-                <GroupBox Header="Timer">
-                    <modern:SimpleStackPanel Orientation="Horizontal">
-                        <modern:SimpleStackPanel.Resources>
-                            <Style TargetType="Button"
-                                   BasedOn="{StaticResource {x:Type Button}}"/>
-                        </modern:SimpleStackPanel.Resources>
-                        <modern:SimpleTimePicker SelectedDateTime="{Binding DateTime}"
-                                                 IsEnabled="{Binding CanChangeTime}"/>
-                        <Button Command="{s:Action SetTimeToNow}"
-                                IsEnabled="{Binding CanChangeTime}">Now</Button>
-                        <Button Command="{s:Action StartStopTimer}"
-                                Content="{Binding TimerText}"/>
-                    </modern:SimpleStackPanel>
-                </GroupBox>
 
                 <!-- Locations Section -->
                 <TextBlock Text="Locations"

@@ -617,20 +617,6 @@ public class SettingsPageViewModel : Screen
     }
 
     [UsedImplicitly]
-    private void OnSelectedInstrumentIndexChanged()
-    {
-        var instrument = (int)SelectedInstrument.Key;
-        Settings.Modify(s => s.SelectedInstrument = instrument);
-    }
-
-    [UsedImplicitly]
-    private void OnSelectedLayoutIndexChanged()
-    {
-        var layout = (int)SelectedLayout.Key;
-        Settings.Modify(s => s.SelectedLayout = layout);
-    }
-
-    [UsedImplicitly]
     private void OnSelectedSpeedChanged() => _events.Publish(this);
 
     [UsedImplicitly]
