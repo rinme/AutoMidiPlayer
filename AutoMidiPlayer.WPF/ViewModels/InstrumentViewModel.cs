@@ -9,6 +9,7 @@ using AutoMidiPlayer.Data.Notification;
 using AutoMidiPlayer.Data.Properties;
 using AutoMidiPlayer.WPF.Core;
 using JetBrains.Annotations;
+using Melanchall.DryWetMidi.Multimedia;
 using Stylet;
 using StyletIoC;
 
@@ -21,6 +22,8 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
     private readonly IContainer _ioc;
     private readonly MainWindowViewModel _main;
     private bool _isUpdatingFromSong;
+    private InputDevice? _inputDevice;
+
 
     public InstrumentViewModel(IContainer ioc, MainWindowViewModel main)
     {
@@ -28,6 +31,9 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
         _main = main;
         _events = ioc.Get<IEventAggregator>();
         _events.Subscribe(this);
+
+        // Initialize selected MIDI input
+        SelectedMidiInput = MidiInputs[0];
 
         // Initialize instrument from settings
         SelectedInstrument = Keyboard.InstrumentNames
@@ -83,6 +89,14 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
         _isUpdatingFromSong = false;
     }
 
+
+    public BindableCollection<MidiInput> MidiInputs { get; } =
+    [
+        new("None")
+    ];
+
+    public MidiInput? SelectedMidiInput { get; set; }
+
     public KeyValuePair<Keyboard.Instrument, string> SelectedInstrument { get; set; }
 
     public KeyValuePair<Keyboard.Layout, string> SelectedLayout { get; set; }
@@ -104,6 +118,41 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
     public DateTime DateTime { get; set; } = DateTime.Now;
 
     public string TimerText => CanChangeTime ? "Start" : "Stop";
+
+    public void RefreshDevices()
+    {
+        MidiInputs.Clear();
+        MidiInputs.Add(new("None"));
+
+        foreach (var device in InputDevice.GetAll())
+        {
+            MidiInputs.Add(new(device.Name));
+        }
+
+        SelectedMidiInput = MidiInputs[0];
+    }
+
+    public void OnSelectedMidiInputChanged()
+    {
+        _inputDevice?.Dispose();
+
+        if (SelectedMidiInput?.DeviceName is not null
+            && SelectedMidiInput.DeviceName != "None")
+        {
+            _inputDevice = InputDevice.GetByName(SelectedMidiInput.DeviceName);
+
+            _inputDevice!.EventReceived += OnNoteEvent; _inputDevice!.EventReceived += OnNoteEvent;
+            _inputDevice!.StartEventsListening();
+        }
+    }
+
+    private void OnNoteEvent(object? sender, MidiEventReceivedEventArgs e)
+    {
+        if (e.Event is not Melanchall.DryWetMidi.Core.NoteOnEvent noteOn) return;
+        if (noteOn.Velocity == 0) return;
+
+        LyrePlayer.PlayNote(noteOn.NoteNumber, SelectedLayout.Key, SelectedInstrument.Key);
+    }
 
     [UsedImplicitly]
     public async Task StartStopTimer()
