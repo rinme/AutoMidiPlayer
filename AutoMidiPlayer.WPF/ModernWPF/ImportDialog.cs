@@ -8,6 +8,15 @@ namespace AutoMidiPlayer.WPF.ModernWPF;
 
 public class ImportDialog : ContentDialog
 {
+    static ImportDialog()
+    {
+        // Ensure the base ContentDialog style is applied to this derived dialog.
+        DefaultStyleKeyProperty.OverrideMetadata(
+            typeof(ImportDialog),
+            new FrameworkPropertyMetadata(typeof(ContentDialog))
+        );
+    }
+
     private readonly Wpf.Ui.Controls.TextBox _titleBox;
     private readonly Wpf.Ui.Controls.TextBox _authorBox;
     private readonly Wpf.Ui.Controls.TextBox _albumBox;
@@ -69,6 +78,40 @@ public class ImportDialog : ContentDialog
 
     public ImportDialog(string defaultTitle, int defaultKey = 0, Transpose defaultTranspose = Transpose.Ignore, string? defaultAuthor = null, string? defaultAlbum = null, DateTime? defaultDateAdded = null, double nativeBpm = 120, double? customBpm = null, bool? mergeNotes = null, uint? mergeMilliseconds = null, bool? holdNotes = null)
     {
+        // Set up the DialogHost for this ContentDialog
+        DialogHelper.SetupDialogHost(this);
+
+        if (Application.Current.TryFindResource(typeof(ContentDialog)) is Style dialogStyle)
+        {
+            Style = dialogStyle;
+        }
+
+        // Keep the dialog within the active window bounds to avoid clipping on fullscreen toggle.
+        var activeWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                           ?? Application.Current.MainWindow;
+        if (activeWindow != null)
+        {
+            void UpdateDialogBounds()
+            {
+                var maxHeight = Math.Max(0, activeWindow.ActualHeight - 120);
+                var maxWidth = Math.Max(0, activeWindow.ActualWidth - 120);
+                DialogMaxHeight = maxHeight;
+                DialogMaxWidth = maxWidth;
+                DialogMargin = new Thickness(24);
+            }
+
+            UpdateDialogBounds();
+            SizeChangedEventHandler? sizeChangedHandler = (_, _) => UpdateDialogBounds();
+            activeWindow.SizeChanged += sizeChangedHandler;
+            EventHandler? stateChangedHandler = (_, _) => UpdateDialogBounds();
+            activeWindow.StateChanged += stateChangedHandler;
+            Closed += (_, _) =>
+            {
+                activeWindow.SizeChanged -= sizeChangedHandler;
+                activeWindow.StateChanged -= stateChangedHandler;
+            };
+        }
+
         Title = "Edit Song";
         PrimaryButtonText = "Save";
         CloseButtonText = "Cancel";

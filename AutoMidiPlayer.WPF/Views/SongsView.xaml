@@ -48,7 +48,7 @@
                           Fill="{DynamicResource TextFillColorPrimaryBrush}"
                           Stretch="Uniform"
                           Width="16"
-                          Height="16"/>
+                            Height="16"/>
                 </Button>
                 <Button Command="{s:Action ShowMissingFilesDialog}"
                         Background="Transparent"

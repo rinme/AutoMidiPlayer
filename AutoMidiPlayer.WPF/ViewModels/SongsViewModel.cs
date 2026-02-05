@@ -298,13 +298,11 @@ public class SongsViewModel : Screen
 
         content.Children.Add(listView);
 
-        var dialog = new ContentDialog
-        {
-            Title = "Missing Files",
-            Content = content,
-            PrimaryButtonText = "Remove All",
-            CloseButtonText = "Close"
-        };
+        var dialog = DialogHelper.CreateDialog();
+        dialog.Title = "Missing Files";
+        dialog.Content = content;
+        dialog.PrimaryButtonText = "Remove All";
+        dialog.CloseButtonText = "Close";
 
         var result = await dialog.ShowAsync();
 
@@ -405,14 +403,12 @@ public class SongsViewModel : Screen
             if (existingByHash != null)
             {
                 // Show warning dialog about duplicate
-                var dialog = new ContentDialog
-                {
-                    Title = "Duplicate File Detected",
-                    Content = $"This MIDI file appears to be a duplicate of:\n\n" +
+                var dialog = DialogHelper.CreateDialog();
+                dialog.Title = "Duplicate File Detected";
+                dialog.Content = $"This MIDI file appears to be a duplicate of:\n\n" +
                               $"'{existingByHash.Song.Title ?? existingByHash.Song.Path}'\n\n" +
-                              $"The existing file will be used and this duplicate will be ignored.",
-                    CloseButtonText = "OK"
-                };
+                              $"The existing file will be used and this duplicate will be ignored.";
+                dialog.CloseButtonText = "OK";
                 await dialog.ShowAsync();
                 return;
             }

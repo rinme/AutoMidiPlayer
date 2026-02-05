@@ -489,15 +489,12 @@ public class SettingsPageViewModel : Screen
 
     public async Task LocationMissing()
     {
-        var dialog = new ContentDialog
-        {
-            Title = "Error",
-            Content = "Could not find Game's Location, please find GenshinImpact.exe, YuanShen.exe, or xdt.exe (Heartopia)",
-
-            PrimaryButtonText = "Find Manually...",
-            SecondaryButtonText = "Ignore (Notes might not play)",
-            CloseButtonText = "Exit"
-        };
+        var dialog = DialogHelper.CreateDialog();
+        dialog.Title = "Error";
+        dialog.Content = "Could not find Game's Location, please find GenshinImpact.exe, YuanShen.exe, or xdt.exe (Heartopia)";
+        dialog.PrimaryButtonText = "Find Manually...";
+        dialog.SecondaryButtonText = "Ignore (Notes might not play)";
+        dialog.CloseButtonText = "Exit";
 
         var result = await dialog.ShowAsync();
 
@@ -633,13 +630,10 @@ public class SettingsPageViewModel : Screen
         if (!File.Exists(location)) return false;
         if (Path.GetFileName(location).Equals("launcher.exe", StringComparison.OrdinalIgnoreCase))
         {
-            var dialog = new ContentDialog
-            {
-                Title = "Incorrect Location",
-                Content = "launcher.exe is not the game, please find GenshinImpact.exe, YuanShen.exe, or xdt.exe (Heartopia)",
-
-                CloseButtonText = "Ok"
-            };
+            var dialog = DialogHelper.CreateDialog();
+            dialog.Title = "Incorrect Location";
+            dialog.Content = "launcher.exe is not the game, please find GenshinImpact.exe, YuanShen.exe, or xdt.exe (Heartopia)";
+            dialog.CloseButtonText = "Ok";
 
             await dialog.ShowAsync();
             return false;
