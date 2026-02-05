@@ -178,6 +178,17 @@ public partial class TrackListControl : UserControl
     /// </summary>
     public ListView ListView => TrackListView;
 
+    /// <summary>
+    /// Ensure PlacementTarget is correctly set when ContextMenu opens
+    /// </summary>
+    private void TrackListView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (TrackListView.ContextMenu != null)
+        {
+            TrackListView.ContextMenu.PlacementTarget = this;
+        }
+    }
+
     private void TrackListView_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         // Find the clicked ListViewItem by walking up the visual tree

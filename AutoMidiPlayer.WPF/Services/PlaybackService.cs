@@ -472,15 +472,15 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
             switch (noteEvent.EventType)
             {
                 case MidiEventType.NoteOff:
-                    LyrePlayer.NoteUp(note, layout, instrument);
+                    KeyboardPlayer.NoteUp(note, layout, instrument);
                     break;
                 case MidiEventType.NoteOn when noteEvent.Velocity <= 0:
                     return;
                 case MidiEventType.NoteOn when useHoldNotes:
-                    LyrePlayer.NoteDown(note, layout, instrument);
+                    KeyboardPlayer.NoteDown(note, layout, instrument);
                     break;
                 case MidiEventType.NoteOn:
-                    LyrePlayer.PlayNote(note, layout, instrument);
+                    KeyboardPlayer.PlayNote(note, layout, instrument);
                     break;
             }
         }
@@ -494,7 +494,7 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
     {
         noteId -= Queue.OpenedFile?.Song.Key ?? SettingsPage.KeyOffset;
         return Settings.TransposeNotes && SettingsPage.Transpose is not null
-            ? LyrePlayer.TransposeNote(instrument, ref noteId, SettingsPage.Transpose.Value.Key)
+            ? KeyboardPlayer.TransposeNote(instrument, ref noteId, SettingsPage.Transpose.Value.Key)
             : noteId;
     }
 

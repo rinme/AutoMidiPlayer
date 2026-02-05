@@ -87,9 +87,9 @@ public class PianoSheetViewModel : Screen
                 var id = note.NoteNumber - SettingsPage.KeyOffset;
                 var transpose = SettingsPage.Transpose?.Key;
                 if (Settings.TransposeNotes && transpose is not null)
-                    LyrePlayer.TransposeNote(instrument, ref id, transpose.Value);
+                    KeyboardPlayer.TransposeNote(instrument, ref id, transpose.Value);
 
-                if (!LyrePlayer.TryGetKey(layout, instrument, id, out var key)) continue;
+                if (!KeyboardPlayer.TryGetKey(layout, instrument, id, out var key)) continue;
 
                 var difference = note.Time - last;
                 var dotCount = difference / Shorten;

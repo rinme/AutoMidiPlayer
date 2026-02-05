@@ -151,7 +151,7 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
         if (e.Event is not Melanchall.DryWetMidi.Core.NoteOnEvent noteOn) return;
         if (noteOn.Velocity == 0) return;
 
-        LyrePlayer.PlayNote(noteOn.NoteNumber, SelectedLayout.Key, SelectedInstrument.Key);
+        KeyboardPlayer.PlayNote(noteOn.NoteNumber, SelectedLayout.Key, SelectedInstrument.Key);
     }
 
     [UsedImplicitly]

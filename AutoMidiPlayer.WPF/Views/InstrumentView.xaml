@@ -89,7 +89,7 @@
                            Margin="0,0,0,8"/>
 
                 <TextBlock Text="Open a song to configure these settings"
-                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                            Visibility="{Binding HasSongOpen, Converter={x:Static s:BoolToVisibilityConverter.InverseInstance}}"
                            Margin="0,0,0,8"/>
 

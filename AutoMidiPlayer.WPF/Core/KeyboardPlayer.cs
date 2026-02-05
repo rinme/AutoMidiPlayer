@@ -9,7 +9,7 @@ using static AutoMidiPlayer.WPF.Core.Keyboard;
 
 namespace AutoMidiPlayer.WPF.Core;
 
-public static class LyrePlayer
+public static class KeyboardPlayer
 {
     private static readonly IInputSimulator Input = new InputSimulator();
 

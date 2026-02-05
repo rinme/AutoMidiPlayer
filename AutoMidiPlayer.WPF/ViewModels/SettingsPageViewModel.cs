@@ -723,7 +723,7 @@ public class SettingsPageViewModel : Screen
     {
         Settings.UseDirectInput = UseDirectInput;
         Settings.Save();
-        LyrePlayer.UseDirectInput = UseDirectInput;
+        KeyboardPlayer.UseDirectInput = UseDirectInput;
     }
 
     [UsedImplicitly]

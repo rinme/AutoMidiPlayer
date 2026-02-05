@@ -92,6 +92,7 @@
                   SelectedItem="{Binding SelectedItem, ElementName=TrackListRoot, Mode=TwoWay}"
                   SelectionMode="Extended"
                   SelectionChanged="TrackListView_SelectionChanged"
+                  ContextMenuOpening="TrackListView_ContextMenuOpening"
                   BorderThickness="0"
                   Background="Transparent"
                   AllowDrop="{Binding AllowReorder, ElementName=TrackListRoot}"

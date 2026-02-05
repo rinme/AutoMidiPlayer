@@ -83,7 +83,7 @@ public class TrackViewModel : Screen
 
                     if (Settings.TransposeNotes && transpose is not null)
                     {
-                        var transposed = LyrePlayer.TransposeNote(instrument, ref noteId, transpose.Value);
+                        var transposed = KeyboardPlayer.TransposeNote(instrument, ref noteId, transpose.Value);
                         return availableNotes.Contains(transposed);
                     }
 
@@ -196,7 +196,7 @@ public class TrackViewModel : Screen
             transposeFunc = noteId =>
             {
                 var id = noteId;
-                return LyrePlayer.TransposeNote(instrument, ref id, transpose.Value);
+                return KeyboardPlayer.TransposeNote(instrument, ref id, transpose.Value);
             };
         }
 
