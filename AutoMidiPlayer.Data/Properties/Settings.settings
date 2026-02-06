@@ -92,5 +92,23 @@
     <Setting Name="LastViewedPage" Type="System.String" Scope="User">
       <Value Profile="(Default)">Songs</Value>
     </Setting>
+    <Setting Name="HotkeysEnabled" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="HotkeyPlayPause" Type="System.String" Scope="User">
+      <Value Profile="(Default)">3|18</Value>
+    </Setting>
+    <Setting Name="HotkeyNext" Type="System.String" Scope="User">
+      <Value Profile="(Default)">3|25</Value>
+    </Setting>
+    <Setting Name="HotkeyPrevious" Type="System.String" Scope="User">
+      <Value Profile="(Default)">3|23</Value>
+    </Setting>
+    <Setting Name="HotkeySpeedUp" Type="System.String" Scope="User">
+      <Value Profile="(Default)">3|24</Value>
+    </Setting>
+    <Setting Name="HotkeySpeedDown" Type="System.String" Scope="User">
+      <Value Profile="(Default)">3|26</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

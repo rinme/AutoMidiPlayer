@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using AutoMidiPlayer.Data;
 using AutoMidiPlayer.Data.Entities;
 using AutoMidiPlayer.Data.Git;
@@ -19,6 +20,7 @@ using AutoMidiPlayer.WPF.Core;
 using AutoMidiPlayer.WPF.ModernWPF;
 using AutoMidiPlayer.WPF.ModernWPF.Animation;
 using AutoMidiPlayer.WPF.ModernWPF.Animation.Transitions;
+using AutoMidiPlayer.WPF.Services;
 using JetBrains.Annotations;
 using Microsoft.Win32;
 using PropertyChanged;
@@ -64,6 +66,7 @@ public class SettingsPageViewModel : Screen
     private readonly IContainer _ioc;
     private readonly IEventAggregator _events;
     private readonly MainWindowViewModel _main;
+    private readonly GlobalHotkeyService _hotkeyService;
     private int _keyOffset;
     private double _speed = 1.0;
     private AccentColorOption _selectedAccentColor = null!;
@@ -74,6 +77,9 @@ public class SettingsPageViewModel : Screen
         _ioc = ioc;
         _events = ioc.Get<IEventAggregator>();
         _main = main;
+
+        // Initialize global hotkey service
+        _hotkeyService = ioc.Get<GlobalHotkeyService>();
 
         // Defer key offset initialization - QueueView may not exist yet
         _keyOffset = 0;
@@ -93,11 +99,11 @@ public class SettingsPageViewModel : Screen
         ApplyAccentColor(_selectedAccentColor.ColorHex);
 
         // Initialize instrument from settings
-        SelectedInstrument = Keyboard.InstrumentNames
+        SelectedInstrument = Core.Keyboard.InstrumentNames
             .FirstOrDefault(i => (int)i.Key == Settings.SelectedInstrument);
 
         // Initialize layout from settings
-        SelectedLayout = Keyboard.LayoutNames
+        SelectedLayout = Core.Keyboard.LayoutNames
             .FirstOrDefault(l => (int)l.Key == Settings.SelectedLayout);
     }
 
@@ -282,6 +288,48 @@ public class SettingsPageViewModel : Screen
 
     public bool UseDirectInput { get; set; } = Settings.UseDirectInput;
 
+    // Hotkey properties - delegating to GlobalHotkeyService
+    public bool HotkeysEnabled
+    {
+        get => _hotkeyService.IsEnabled;
+        set
+        {
+            _hotkeyService.IsEnabled = value;
+            Settings.Modify(s => s.HotkeysEnabled = value);
+            NotifyOfPropertyChange();
+        }
+    }
+
+    public HotkeyBinding PlayPauseHotkey => _hotkeyService.PlayPauseHotkey;
+    public HotkeyBinding NextHotkey => _hotkeyService.NextHotkey;
+    public HotkeyBinding PreviousHotkey => _hotkeyService.PreviousHotkey;
+    public HotkeyBinding SpeedUpHotkey => _hotkeyService.SpeedUpHotkey;
+    public HotkeyBinding SpeedDownHotkey => _hotkeyService.SpeedDownHotkey;
+
+    public void UpdateHotkey(string name, Key key, ModifierKeys modifiers)
+    {
+        _hotkeyService.UpdateHotkey(name, key, modifiers);
+        NotifyHotkeyChanged(name);
+    }
+
+    public void ClearHotkey(string name)
+    {
+        _hotkeyService.ClearHotkey(name);
+        NotifyHotkeyChanged(name);
+    }
+
+    private void NotifyHotkeyChanged(string name)
+    {
+        switch (name)
+        {
+            case "PlayPause": NotifyOfPropertyChange(nameof(PlayPauseHotkey)); break;
+            case "Next": NotifyOfPropertyChange(nameof(NextHotkey)); break;
+            case "Previous": NotifyOfPropertyChange(nameof(PreviousHotkey)); break;
+            case "SpeedUp": NotifyOfPropertyChange(nameof(SpeedUpHotkey)); break;
+            case "SpeedDown": NotifyOfPropertyChange(nameof(SpeedDownHotkey)); break;
+        }
+    }
+
     public string MidiFolder { get; set; } = Settings.MidiFolder;
 
     public bool HasMidiFolder => !string.IsNullOrEmpty(MidiFolder);
@@ -318,9 +366,9 @@ public class SettingsPageViewModel : Screen
 
     public int MinOffset => KeyOffsets.Keys.Min();
 
-    public KeyValuePair<Keyboard.Instrument, string> SelectedInstrument { get; set; }
+    public KeyValuePair<Core.Keyboard.Instrument, string> SelectedInstrument { get; set; }
 
-    public KeyValuePair<Keyboard.Layout, string> SelectedLayout { get; set; }
+    public KeyValuePair<Core.Keyboard.Layout, string> SelectedLayout { get; set; }
 
     public KeyValuePair<Transpose, string>? Transpose { get; set; }
 

@@ -438,5 +438,95 @@ namespace AutoMidiPlayer.Data.Properties
                 this["LastViewedPage"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool HotkeysEnabled
+        {
+            get
+            {
+                return ((bool)(this["HotkeysEnabled"]));
+            }
+            set
+            {
+                this["HotkeysEnabled"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3|18")]
+        public string HotkeyPlayPause
+        {
+            get
+            {
+                return ((string)(this["HotkeyPlayPause"]));
+            }
+            set
+            {
+                this["HotkeyPlayPause"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3|25")]
+        public string HotkeyNext
+        {
+            get
+            {
+                return ((string)(this["HotkeyNext"]));
+            }
+            set
+            {
+                this["HotkeyNext"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3|23")]
+        public string HotkeyPrevious
+        {
+            get
+            {
+                return ((string)(this["HotkeyPrevious"]));
+            }
+            set
+            {
+                this["HotkeyPrevious"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3|24")]
+        public string HotkeySpeedUp
+        {
+            get
+            {
+                return ((string)(this["HotkeySpeedUp"]));
+            }
+            set
+            {
+                this["HotkeySpeedUp"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3|26")]
+        public string HotkeySpeedDown
+        {
+            get
+            {
+                return ((string)(this["HotkeySpeedDown"]));
+            }
+            set
+            {
+                this["HotkeySpeedDown"] = value;
+            }
+        }
     }
 }

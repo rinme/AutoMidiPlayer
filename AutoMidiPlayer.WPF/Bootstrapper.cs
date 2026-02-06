@@ -185,6 +185,9 @@ public class Bootstrapper : Bootstrapper<MainWindowViewModel>
             return player;
         }).InSingletonScope();
 
+        // Register GlobalHotkeyService as singleton
+        builder.Bind<Services.GlobalHotkeyService>().ToSelf().InSingletonScope();
+
         // Theme service removed in WPF-UI 3.x - use ApplicationThemeManager directly
     }
 }

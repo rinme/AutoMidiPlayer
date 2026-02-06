@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using AutoMidiPlayer.WPF.Services;
 using AutoMidiPlayer.WPF.ViewModels;
 using Wpf.Ui.Controls;
 
@@ -7,15 +8,36 @@ namespace AutoMidiPlayer.WPF.Views;
 
 public partial class MainWindowView : FluentWindow
 {
+    private GlobalHotkeyService? _hotkeyService;
+
     public MainWindowView()
     {
         InitializeComponent();
         Closing += OnClosing;
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            // Initialize global hotkey service with window handle
+            _hotkeyService = vm.Ioc.Get<GlobalHotkeyService>();
+            _hotkeyService.Initialize(this);
+
+            // Wire up hotkey events to playback controls
+            _hotkeyService.PlayPausePressed += async (_, _) => await vm.Playback.PlayPause();
+            _hotkeyService.NextPressed += (_, _) => vm.Playback.Next();
+            _hotkeyService.PreviousPressed += (_, _) => vm.Playback.Previous();
+            _hotkeyService.SpeedUpPressed += (_, _) => vm.SettingsView.IncreaseSpeed();
+            _hotkeyService.SpeedDownPressed += (_, _) => vm.SettingsView.DecreaseSpeed();
+        }
     }
 
     private void OnClosing(object? sender, CancelEventArgs e)
     {
-        // Dispose the tray icon when closing
+        // Dispose the hotkey service and tray icon when closing
+        _hotkeyService?.Dispose();
         TrayIcon?.Dispose();
     }
 

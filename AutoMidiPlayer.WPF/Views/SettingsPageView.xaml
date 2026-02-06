@@ -31,7 +31,7 @@
                 <!-- Player Section -->
                 <TextBlock Text="Player"
                            FontSize="20"
-                        FontWeight="SemiBold"
+                           FontWeight="SemiBold"
                            Margin="0,0,0,8"/>
 
                 <ui:ToggleSwitch
@@ -45,10 +45,50 @@
                            FontSize="12"
                            Margin="0,8,0,0"/>
 
+                <!-- Keybinds Section -->
+                <TextBlock Text="Keybinds"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Margin="0,16,0,8"/>
+
+                <ui:ToggleSwitch Content="Enable global hotkeys"
+                                 IsChecked="{Binding HotkeysEnabled}"
+                                 ToolTip="When enabled, hotkeys work even when the app is not focused"/>
+
+                <TextBlock Text="Global hotkeys work even when the app is not in focus. Requires at least one modifier key (Ctrl, Alt, Shift)."
+                           TextWrapping="Wrap"
+                           Opacity="0.6"
+                           FontSize="12"
+                           Margin="0,4,0,8"/>
+
+                <controls:SimpleStackPanel Spacing="8"
+                                           Visibility="{Binding HotkeysEnabled, Converter={x:Static s:BoolToVisibilityConverter.Instance}}">
+                    <controls:HotkeyEditControl
+                        HotkeyBinding="{Binding PlayPauseHotkey}"
+                        HotkeyChanged="OnHotkeyChanged"
+                        HotkeyCleared="OnHotkeyCleared"/>
+                    <controls:HotkeyEditControl
+                        HotkeyBinding="{Binding NextHotkey}"
+                        HotkeyChanged="OnHotkeyChanged"
+                        HotkeyCleared="OnHotkeyCleared"/>
+                    <controls:HotkeyEditControl
+                        HotkeyBinding="{Binding PreviousHotkey}"
+                        HotkeyChanged="OnHotkeyChanged"
+                        HotkeyCleared="OnHotkeyCleared"/>
+                    <controls:HotkeyEditControl
+                        HotkeyBinding="{Binding SpeedUpHotkey}"
+                        HotkeyChanged="OnHotkeyChanged"
+                        HotkeyCleared="OnHotkeyCleared"/>
+                    <controls:HotkeyEditControl
+                        HotkeyBinding="{Binding SpeedDownHotkey}"
+                        HotkeyChanged="OnHotkeyChanged"
+                        HotkeyCleared="OnHotkeyCleared"/>
+                </controls:SimpleStackPanel>
+
                 <!-- Locations Section -->
                 <TextBlock Text="Locations"
                            FontSize="20"
-                        FontWeight="SemiBold"
+                           FontWeight="SemiBold"
                            Margin="0,16,0,8"/>
 
                 <GroupBox Header="Game Location">
@@ -112,7 +152,7 @@
                 <!-- License Section -->
                 <TextBlock Text="License"
                            FontSize="20"
-                        FontWeight="SemiBold"
+                           FontWeight="SemiBold"
                            Margin="0,16,0,8"/>
 
                 <controls:SimpleStackPanel Spacing="4">
@@ -221,6 +261,7 @@
                         ItemsSource="{x:Static transitions:TransitionCollection.Transitions}"
                         MinWidth="150"/>
                 </GroupBox>
+
             </controls:SimpleStackPanel>
         </Grid>
     </ScrollViewer>
