@@ -86,13 +86,13 @@ The short answer is that it's uncertain. Use it at your own risk. Do not play so
 ## Pull Request Process
 
 1. Do not include the build itself where the project is cleaned using `dotnet clean`.
-2. Update the README.md with details of changes to the project, new features, and others that are applicable.
-3. Increase the version number of the project and the README.md to the new version that this
+2. Update the README.md with details of changes to the project, new features, and others if applicable.
+3. Increase the version number of the project to the new version that this
    Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org).
-4. You may merge the Pull Request in once you have the the approval of the maintainers.
 
 ## Build
-If you just want to run the program, there are precompiled releases that can be found in [here](https://github.com/Jed556/AutoMidiPlayer/releases).
+If you just want to run the program, there are precompiled binaries in [releases](https://github.com/Jed556/AutoMidiPlayer/releases).
+
 ### Requirements
 * [Git](https://git-scm.com) for cloning the project
 * [.NET 8.0](https://dotnet.microsoft.com/download) SDK or later
@@ -102,8 +102,7 @@ If you just want to run the program, there are precompiled releases that can be 
 git clone https://github.com/Jed556/AutoMidiPlayer.git
 cd AutoMidiPlayer
 
-dotnet publish AutoMidiPlayer.WPF -r win-x64 ^
-               -c Release --self-contained false -p:PublishSingleFile=true
+dotnet publish AutoMidiPlayer.WPF -r win-x64-c Release --self-contained false -p:PublishSingleFile=true
 ```
 > For other runtimes, visit the [RID Catalog](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog) and change the runtime value.
 

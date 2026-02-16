@@ -399,6 +399,13 @@ public class SongsViewModel : Screen
         // Check if a file with the same hash already exists (duplicate content)
         if (fileHash != null)
         {
+            var missingByHash = MissingSongs.FirstOrDefault(song => song.FileHash == fileHash);
+            if (missingByHash != null)
+            {
+                await RestoreMissingSong(missingByHash, fileName, fileHash);
+                return;
+            }
+
             var existingByHash = Tracks.FirstOrDefault(t => t.Song.FileHash == fileHash);
             if (existingByHash != null)
             {
@@ -429,6 +436,22 @@ public class SongsViewModel : Screen
         await using var db = _ioc.Get<LyreContext>();
         db.Songs.Add(song);
         await db.SaveChangesAsync();
+    }
+
+    private async Task RestoreMissingSong(Song missingSong, string newPath, string fileHash)
+    {
+        missingSong.Path = newPath;
+        missingSong.FileHash = fileHash;
+
+        await AddFile(missingSong);
+
+        await using var db = _ioc.Get<LyreContext>();
+        db.Songs.Update(missingSong);
+        await db.SaveChangesAsync();
+
+        MissingSongs.Remove(missingSong);
+        NotifyOfPropertyChange(nameof(HasMissingSongs));
+        NotifyOfPropertyChange(nameof(MissingSongs));
     }
 
     public async Task RemoveTrack()

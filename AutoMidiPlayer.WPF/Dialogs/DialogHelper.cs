@@ -16,6 +16,10 @@ public static class DialogHelper
     {
         var dialog = new ContentDialog();
         SetupDialogHost(dialog);
+
+        if (Application.Current.TryFindResource(typeof(ContentDialog)) is Style dialogStyle)
+            dialog.Style = dialogStyle;
+
         return dialog;
     }
 

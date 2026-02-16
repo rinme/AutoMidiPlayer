@@ -94,13 +94,8 @@ public class SettingsPageViewModel : Screen
             ?? AccentColors[0]; // Default to Green
         ApplyAccentColor(_selectedAccentColor.ColorHex);
 
-        // Initialize instrument from settings
-        SelectedInstrument = Core.Keyboard.InstrumentNames
-            .FirstOrDefault(i => (int)i.Key == Settings.SelectedInstrument);
-
-        // Initialize layout from settings
-        SelectedLayout = Core.Keyboard.LayoutNames
-            .FirstOrDefault(l => (int)l.Key == Settings.SelectedLayout);
+        SelectedInstrument = Core.Keyboard.GetInstrumentAtIndex(Settings.SelectedInstrument);
+        SelectedLayout = Core.Keyboard.GetLayoutAtIndex(Settings.SelectedLayout);
     }
 
     public AccentColorOption SelectedAccentColor
@@ -374,9 +369,9 @@ public class SettingsPageViewModel : Screen
 
     public GitVersion LatestVersion { get; set; } = new();
 
-    public KeyValuePair<Core.Keyboard.Instrument, string> SelectedInstrument { get; set; }
+    public KeyValuePair<string, string> SelectedInstrument { get; set; }
 
-    public KeyValuePair<Core.Keyboard.Layout, string> SelectedLayout { get; set; }
+    public KeyValuePair<string, string> SelectedLayout { get; set; }
 
     public static string GenshinLocation
     {

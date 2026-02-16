@@ -25,7 +25,7 @@ public class PianoSheetViewModel : Screen
     [OnChangedMethod(nameof(Update))] public char Delimiter { get; set; } = '_';
 
     [OnChangedMethod(nameof(Update))]
-    public KeyValuePair<Keyboard.Layout, string> SelectedLayout
+    public KeyValuePair<string, string> SelectedLayout
     {
         get => InstrumentPage.SelectedLayout;
         set => InstrumentPage.SelectedLayout = value;
@@ -68,8 +68,8 @@ public class PianoSheetViewModel : Screen
         if (Bars == 0 && Beats == 0)
             return;
 
-        var layout = InstrumentPage.SelectedLayout.Key;
-        var instrument = InstrumentPage.SelectedInstrument.Key;
+        var layout = InstrumentPage.SelectedLayout.Key; // layout name (string)
+        var instrument = InstrumentPage.SelectedInstrument.Key; // instrument id (string)
 
         // Ticks is too small so it is not included
         var split = QueueView.OpenedFile.Split(Bars, Beats, 0);

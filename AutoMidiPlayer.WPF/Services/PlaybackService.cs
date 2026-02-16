@@ -507,11 +507,11 @@ public class PlaybackService : PropertyChangedBase, IHandle<MidiFile>, IHandle<M
         }
     }
 
-    private int ApplyNoteSettings(Keyboard.Instrument instrument, int noteId)
+    private int ApplyNoteSettings(string instrumentId, int noteId)
     {
         noteId -= Queue.OpenedFile?.Song.Key ?? SongSettings.KeyOffset;
         return Settings.TransposeNotes && SongSettings.Transpose is not null
-            ? KeyboardPlayer.TransposeNote(instrument, ref noteId, SongSettings.Transpose.Value.Key)
+            ? KeyboardPlayer.TransposeNote(instrumentId, ref noteId, SongSettings.Transpose.Value.Key)
             : noteId;
     }
 

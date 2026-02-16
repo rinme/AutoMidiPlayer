@@ -35,13 +35,13 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
         // Initialize selected MIDI input
         SelectedMidiInput = MidiInputs[0];
 
-        // Initialize instrument from settings
-        SelectedInstrument = Keyboard.InstrumentNames
-            .FirstOrDefault(i => (int)i.Key == Settings.SelectedInstrument);
+        SelectedInstrument = Keyboard.GetInstrumentAtIndex(Settings.SelectedInstrument);
+        RefreshAvailableLayouts();
 
-        // Initialize layout from settings
-        SelectedLayout = Keyboard.LayoutNames
-            .FirstOrDefault(l => (int)l.Key == Settings.SelectedLayout);
+        var preferredLayout = Keyboard.GetLayoutAtIndex(Settings.SelectedLayout);
+        SelectedLayout = AvailableLayouts.FirstOrDefault(layout => layout.Key == preferredLayout.Key);
+        if (SelectedLayout.Equals(default(KeyValuePair<string, string>)) && AvailableLayouts.Count > 0)
+            SelectedLayout = AvailableLayouts[0];
 
         // Initialize note settings to defaults (will be updated when song is loaded)
         MergeNotes = false;
@@ -97,9 +97,11 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
 
     public MidiInput? SelectedMidiInput { get; set; }
 
-    public KeyValuePair<Keyboard.Instrument, string> SelectedInstrument { get; set; }
+    public KeyValuePair<string, string> SelectedInstrument { get; set; }
 
-    public KeyValuePair<Keyboard.Layout, string> SelectedLayout { get; set; }
+    public KeyValuePair<string, string> SelectedLayout { get; set; }
+
+    public BindableCollection<KeyValuePair<string, string>> AvailableLayouts { get; } = new();
 
     public bool MergeNotes { get; set; }
 
@@ -181,17 +183,33 @@ public class InstrumentViewModel : Screen, IHandle<MidiFile>
     [UsedImplicitly]
     private void OnSelectedInstrumentChanged()
     {
-        var instrument = (int)SelectedInstrument.Key;
-        Settings.Modify(s => s.SelectedInstrument = instrument);
+        RefreshAvailableLayouts();
+
+        if (!AvailableLayouts.Any(layout => layout.Key == SelectedLayout.Key) && AvailableLayouts.Count > 0)
+            SelectedLayout = AvailableLayouts[0];
+
+        var index = Keyboard.GetInstrumentIndex(SelectedInstrument.Key);
+        Settings.Modify(s => s.SelectedInstrument = index);
         _events.Publish(this);
     }
 
     [UsedImplicitly]
     private void OnSelectedLayoutChanged()
     {
-        var layout = (int)SelectedLayout.Key;
-        Settings.Modify(s => s.SelectedLayout = layout);
+        var index = Keyboard.GetLayoutIndex(SelectedLayout.Key);
+        Settings.Modify(s => s.SelectedLayout = index);
         _events.Publish(this);
+    }
+
+    private void RefreshAvailableLayouts()
+    {
+        AvailableLayouts.Clear();
+
+        var layouts = Keyboard.GetLayoutNamesForInstrument(SelectedInstrument.Key);
+        foreach (var layout in layouts)
+            AvailableLayouts.Add(layout);
+
+        NotifyOfPropertyChange(nameof(AvailableLayouts));
     }
 
     [UsedImplicitly]

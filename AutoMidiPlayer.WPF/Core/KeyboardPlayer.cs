@@ -53,11 +53,11 @@ public static class KeyboardPlayer
     public static bool UseDirectInput { get; set; } = true;
 
     public static int TransposeNote(
-        Instrument instrument, ref int noteId,
+        string instrumentId, ref int noteId,
         Transpose direction = Transpose.Ignore)
     {
         if (direction is Transpose.Ignore) return noteId;
-        var notes = GetNotes(instrument);
+        var notes = Keyboard.GetNotes(instrumentId);
         while (true)
         {
             if (notes.Contains(noteId))
@@ -79,19 +79,19 @@ public static class KeyboardPlayer
         }
     }
 
-    public static void NoteDown(int noteId, Layout layout, Instrument instrument)
-        => InteractNote(noteId, layout, instrument, Input.Keyboard.KeyDown);
+    public static void NoteDown(int noteId, string layoutName, string instrumentId)
+        => InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyDown);
 
-    public static void NoteUp(int noteId, Layout layout, Instrument instrument)
-        => InteractNote(noteId, layout, instrument, Input.Keyboard.KeyUp);
+    public static void NoteUp(int noteId, string layoutName, string instrumentId)
+        => InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyUp);
 
-    public static void PlayNote(int noteId, Layout layout, Instrument instrument)
-        => InteractNote(noteId, layout, instrument, Input.Keyboard.KeyPress);
+    public static void PlayNote(int noteId, string layoutName, string instrumentId)
+        => InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyPress);
 
-    public static bool TryGetKey(Layout layout, Instrument instrument, int noteId, out VirtualKeyCode key)
+    public static bool TryGetKey(string layoutName, string instrumentId, int noteId, out VirtualKeyCode key)
     {
-        var keys = GetLayout(layout, instrument);
-        var notes = GetNotes(instrument);
+        var keys = Keyboard.GetLayout(layoutName, instrumentId);
+        var notes = Keyboard.GetNotes(instrumentId);
         return TryGetKey(keys, notes, noteId, out key);
     }
 
@@ -106,10 +106,10 @@ public static class KeyboardPlayer
     }
 
     private static void InteractNote(
-        int noteId, Layout layout, Instrument instrument,
+        int noteId, string layoutName, string instrumentId,
         Func<VirtualKeyCode, IKeyboardSimulator> action)
     {
-        if (TryGetKey(layout, instrument, noteId, out var key))
+        if (TryGetKey(layoutName, instrumentId, noteId, out var key))
         {
             if (UseDirectInput)
             {

@@ -6,13 +6,13 @@ This project has a [Code of Conduct](https://github.com/Jed556/AutoMidiPlayer?ta
 ## Pull Request Process
 
 1. Do not include the build itself where the project is cleaned using `dotnet clean`.
-2. Update the README.md with details of changes to the project, new features, and others that are applicable.
+2. Update the README.md with details of changes to the project, new features, and others if applicable.
 3. Increase the version number of the project and the README.md to the new version that this
    Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
-4. You may merge the Pull Request in once you have the the approval of the maintainers.
 
 ## Build
 If you just want to run the program, there are precompiled releases that can be found in [here](https://github.com/Jed556/AutoMidiPlayer/releases).
+
 ### Requirements
 * [Git](https://git-scm.com) for cloning the project
 * [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/5.0) SDK
@@ -20,7 +20,7 @@ If you just want to run the program, there are precompiled releases that can be 
 #### Publish a single binary for Windows
 ```bat
 git clone https://github.com/Jed556/AutoMidiPlayer.git
-cd AutoMidiPlayer\AutoMidiPlayer
+cd AutoMidiPlayer
 
 dotnet publish -r win-x86 -c Release -o bin\publish --self-contained false -p:PublishSingleFile=true
 ```

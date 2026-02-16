@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using AutoMidiPlayer.WPF.Core.Instruments;
 using WindowsInput.Native;
 
@@ -9,198 +10,170 @@ namespace AutoMidiPlayer.WPF.Core;
 
 /// <summary>
 /// Central keyboard configuration containing instrument and layout definitions.
-/// Game-specific instrument configurations are in the Instruments folder.
+/// Game-specific instrument configurations are discovered dynamically from the Games folder.
 /// </summary>
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 [SuppressMessage("ReSharper", "StringLiteralTypo")]
 [SuppressMessage("ReSharper", "IdentifierTypo")]
 public static class Keyboard
 {
-    #region Enums
-
-    public enum Instrument
-    {
-        GenshinWindsongLyre,
-        GenshinFloralZither,
-        GenshinVintageLyre,
-        HeartopiaPiano3r,
-        HeartopiaPiano22k,
-        HeartopiaPiano37k,
-        HeartopiaLyre2r,
-        HeartopiaLyre3r
-    }
-
-    public enum Layout
-    {
-        QWERTY,
-        QWERTZ,
-        AZERTY,
-        DVORAK,
-        DVORAKLeft,
-        DVORAKRight,
-        Colemak
-    }
-
-    #endregion
-
     #region Display Names
 
     /// <summary>
-    /// Instrument display names built from InstrumentConfig
+    /// Instrument display names discovered dynamically from game files.
+    /// Instrument id is the instrument Name string.
     /// </summary>
-    public static readonly Dictionary<Instrument, string> InstrumentNames =
-        Enum.GetValues<Instrument>()
-            .ToDictionary(i => i, i => GetInstrumentConfig(i).Name);
+    private static readonly Dictionary<string, InstrumentConfig> _instrumentRegistry = BuildInstrumentRegistry();
 
-    public static readonly Dictionary<Layout, string> LayoutNames = new()
+    private static readonly Dictionary<string, KeyboardLayoutConfig> _layoutRegistry = BuildLayoutRegistry();
+
+    public static readonly IReadOnlyDictionary<string, string> InstrumentNames =
+        _instrumentRegistry.ToDictionary(kv => kv.Key, kv => kv.Value.Name);
+
+    /// <summary>
+    /// Layout display names discovered dynamically from game KeyboardLayout files.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> LayoutNames =
+        _layoutRegistry.ToDictionary(kv => kv.Key, kv => kv.Value.Name);
+
+    private static Dictionary<string, InstrumentConfig> BuildInstrumentRegistry()
     {
-        [Layout.QWERTY] = "QWERTY",
-        [Layout.QWERTZ] = "QWERTZ",
-        [Layout.AZERTY] = "AZERTY",
-        [Layout.DVORAK] = "DVORAK",
-        [Layout.DVORAKLeft] = "DVORAK Left Handed",
-        [Layout.DVORAKRight] = "DVORAK Right Handed",
-        [Layout.Colemak] = "Colemak"
-    };
+        var dict = new Dictionary<string, InstrumentConfig>(StringComparer.OrdinalIgnoreCase);
+
+        var fields = typeof(Keyboard).Assembly
+            .GetTypes()
+            .Where(t => t.Namespace == "AutoMidiPlayer.WPF.Core.Instruments")
+            .SelectMany(t => t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+            .Where(f => f.FieldType == typeof(InstrumentConfig));
+
+        foreach (var field in fields)
+        {
+            if (field.GetValue(null) is not InstrumentConfig config)
+                continue;
+
+            if (string.IsNullOrWhiteSpace(config.Name))
+                continue;
+
+            dict[config.Name] = config;
+        }
+
+        return dict
+            .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static Dictionary<string, KeyboardLayoutConfig> BuildLayoutRegistry()
+    {
+        var dict = new Dictionary<string, KeyboardLayoutConfig>(StringComparer.OrdinalIgnoreCase);
+
+        var fields = typeof(Keyboard).Assembly
+            .GetTypes()
+            .Where(t => t.Namespace == "AutoMidiPlayer.WPF.Core.Instruments")
+            .SelectMany(t => t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+            .Where(f => f.FieldType == typeof(KeyboardLayoutConfig));
+
+        foreach (var field in fields)
+        {
+            if (field.GetValue(null) is not KeyboardLayoutConfig layout)
+                continue;
+
+            if (string.IsNullOrWhiteSpace(layout.Name))
+                continue;
+
+            dict[layout.Name] = layout;
+        }
+
+        return dict
+            .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static KeyValuePair<string, string> GetInstrumentAtIndex(int index)
+    {
+        var list = InstrumentNames.ToList();
+        if (list.Count == 0)
+            return default;
+
+        return index >= 0 && index < list.Count ? list[index] : list[0];
+    }
+
+    public static KeyValuePair<string, string> GetLayoutAtIndex(int index)
+    {
+        var list = LayoutNames.ToList();
+        if (list.Count == 0)
+            return default;
+
+        return index >= 0 && index < list.Count ? list[index] : list[0];
+    }
+
+    public static int GetInstrumentIndex(string instrumentId)
+    {
+        var list = InstrumentNames.Keys.ToList();
+        var idx = list.FindIndex(id => string.Equals(id, instrumentId, StringComparison.OrdinalIgnoreCase));
+        return idx >= 0 ? idx : 0;
+    }
+
+    public static int GetLayoutIndex(string layoutName)
+    {
+        var list = LayoutNames.Keys.ToList();
+        var idx = list.FindIndex(name => string.Equals(name, layoutName, StringComparison.OrdinalIgnoreCase));
+        return idx >= 0 ? idx : 0;
+    }
+
+    public static IReadOnlyDictionary<string, string> GetLayoutNamesForInstrument(string instrumentId)
+    {
+        var config = GetInstrumentConfig(instrumentId);
+
+        var layouts = config.KeyboardLayouts
+            .GroupBy(layout => layout.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(layout => layout.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(layout => layout.Name, layout => layout.Name, StringComparer.OrdinalIgnoreCase);
+
+        return layouts;
+    }
 
     #endregion
 
-    #region Keyboard Layouts
-
-    private static readonly IReadOnlyList<VirtualKeyCode> QWERTY = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.VK_Z, VirtualKeyCode.VK_X, VirtualKeyCode.VK_C, VirtualKeyCode.VK_V,
-        VirtualKeyCode.VK_B, VirtualKeyCode.VK_N, VirtualKeyCode.VK_M,
-
-        VirtualKeyCode.VK_A, VirtualKeyCode.VK_S, VirtualKeyCode.VK_D, VirtualKeyCode.VK_F,
-        VirtualKeyCode.VK_G, VirtualKeyCode.VK_H, VirtualKeyCode.VK_J,
-
-        VirtualKeyCode.VK_Q, VirtualKeyCode.VK_W, VirtualKeyCode.VK_E, VirtualKeyCode.VK_R,
-        VirtualKeyCode.VK_T, VirtualKeyCode.VK_Y, VirtualKeyCode.VK_U
-    };
-
-    private static readonly IReadOnlyList<VirtualKeyCode> QWERTZ = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.VK_Y, VirtualKeyCode.VK_X, VirtualKeyCode.VK_C, VirtualKeyCode.VK_V,
-        VirtualKeyCode.VK_B, VirtualKeyCode.VK_N, VirtualKeyCode.VK_M,
-
-        VirtualKeyCode.VK_A, VirtualKeyCode.VK_S, VirtualKeyCode.VK_D, VirtualKeyCode.VK_F,
-        VirtualKeyCode.VK_G, VirtualKeyCode.VK_H, VirtualKeyCode.VK_J,
-
-        VirtualKeyCode.VK_Q, VirtualKeyCode.VK_W, VirtualKeyCode.VK_E, VirtualKeyCode.VK_R,
-        VirtualKeyCode.VK_T, VirtualKeyCode.VK_Z, VirtualKeyCode.VK_U
-    };
-
-    private static readonly IReadOnlyList<VirtualKeyCode> AZERTY = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.VK_W, VirtualKeyCode.VK_X, VirtualKeyCode.VK_C, VirtualKeyCode.VK_V,
-        VirtualKeyCode.VK_B, VirtualKeyCode.VK_N, VirtualKeyCode.OEM_COMMA,
-
-        VirtualKeyCode.VK_Q, VirtualKeyCode.VK_S, VirtualKeyCode.VK_D, VirtualKeyCode.VK_F,
-        VirtualKeyCode.VK_G, VirtualKeyCode.VK_H, VirtualKeyCode.VK_J,
-
-        VirtualKeyCode.VK_A, VirtualKeyCode.VK_Z, VirtualKeyCode.VK_E, VirtualKeyCode.VK_R,
-        VirtualKeyCode.VK_T, VirtualKeyCode.VK_Y, VirtualKeyCode.VK_U
-    };
-
-    private static readonly IReadOnlyList<VirtualKeyCode> DVORAK = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.OEM_2, VirtualKeyCode.VK_B, VirtualKeyCode.VK_I, VirtualKeyCode.OEM_PERIOD,
-        VirtualKeyCode.VK_N, VirtualKeyCode.VK_L, VirtualKeyCode.VK_M,
-
-        VirtualKeyCode.VK_A, VirtualKeyCode.OEM_1, VirtualKeyCode.VK_H, VirtualKeyCode.VK_Y,
-        VirtualKeyCode.VK_U, VirtualKeyCode.VK_J, VirtualKeyCode.VK_C,
-
-        VirtualKeyCode.VK_X, VirtualKeyCode.OEM_COMMA, VirtualKeyCode.VK_D, VirtualKeyCode.VK_O,
-        VirtualKeyCode.VK_K, VirtualKeyCode.VK_T, VirtualKeyCode.VK_F
-    };
-
-    private static readonly IReadOnlyList<VirtualKeyCode> DVORAKLeft = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.VK_L, VirtualKeyCode.VK_X, VirtualKeyCode.VK_D, VirtualKeyCode.VK_V,
-        VirtualKeyCode.VK_E, VirtualKeyCode.VK_N, VirtualKeyCode.VK_6,
-
-        VirtualKeyCode.VK_K, VirtualKeyCode.VK_U, VirtualKeyCode.VK_F, VirtualKeyCode.VK_5,
-        VirtualKeyCode.VK_C, VirtualKeyCode.VK_H, VirtualKeyCode.VK_8,
-
-        VirtualKeyCode.VK_W, VirtualKeyCode.VK_B, VirtualKeyCode.VK_J, VirtualKeyCode.VK_Y,
-        VirtualKeyCode.VK_G, VirtualKeyCode.VK_R, VirtualKeyCode.VK_T
-    };
-
-    private static readonly IReadOnlyList<VirtualKeyCode> DVORAKRight = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.VK_D, VirtualKeyCode.VK_C, VirtualKeyCode.VK_L, VirtualKeyCode.OEM_COMMA,
-        VirtualKeyCode.VK_P, VirtualKeyCode.VK_N, VirtualKeyCode.VK_7,
-
-        VirtualKeyCode.VK_F, VirtualKeyCode.VK_U, VirtualKeyCode.VK_K, VirtualKeyCode.VK_8,
-        VirtualKeyCode.OEM_PERIOD, VirtualKeyCode.VK_H, VirtualKeyCode.VK_5,
-
-        VirtualKeyCode.VK_E, VirtualKeyCode.VK_M, VirtualKeyCode.VK_G, VirtualKeyCode.VK_Y,
-        VirtualKeyCode.VK_J, VirtualKeyCode.VK_O, VirtualKeyCode.VK_I
-    };
-
-    private static readonly IReadOnlyList<VirtualKeyCode> Colemak = new List<VirtualKeyCode>
-    {
-        VirtualKeyCode.VK_Z, VirtualKeyCode.VK_X, VirtualKeyCode.VK_C, VirtualKeyCode.VK_V,
-        VirtualKeyCode.VK_B, VirtualKeyCode.VK_J, VirtualKeyCode.VK_M,
-
-        VirtualKeyCode.VK_A, VirtualKeyCode.VK_D, VirtualKeyCode.VK_G, VirtualKeyCode.VK_E,
-        VirtualKeyCode.VK_T, VirtualKeyCode.VK_H, VirtualKeyCode.VK_Y,
-
-        VirtualKeyCode.VK_Q, VirtualKeyCode.VK_W, VirtualKeyCode.VK_K, VirtualKeyCode.VK_S,
-        VirtualKeyCode.VK_F, VirtualKeyCode.VK_O, VirtualKeyCode.VK_I
-    };
-
-    #endregion
+    // Keyboard layout tables live in game-specific layout files (see Core/Games/*/KeyboardLayout.cs)
+    // and are discovered dynamically.
 
     #region Helper Methods
 
     /// <summary>
     /// Get the instrument configuration for the specified instrument
     /// </summary>
-    public static InstrumentConfig GetInstrumentConfig(Instrument instrument)
+    public static InstrumentConfig GetInstrumentConfig(string instrumentId)
     {
-        if (GenshinInstruments.All.TryGetValue(instrument, out var genshinConfig))
-            return genshinConfig;
+        if (_instrumentRegistry.TryGetValue(instrumentId, out var cfg))
+            return cfg;
 
-        if (HeartopiaInstruments.All.TryGetValue(instrument, out var heartopiaConfig))
-            return heartopiaConfig;
-
-        // Fallback to Windsong Lyre
-        return GenshinInstruments.WindsongLyre;
+        // fallback: return first discovered instrument if requested id not found
+        return _instrumentRegistry.Values.First();
     }
 
     /// <summary>
     /// Get the key layout for the specified keyboard layout and instrument
     /// </summary>
-    public static IEnumerable<VirtualKeyCode> GetLayout(Layout layout, Instrument instrument)
+    public static IEnumerable<VirtualKeyCode> GetLayout(string layoutName, string instrumentId)
     {
-        var config = GetInstrumentConfig(instrument);
+        var config = GetInstrumentConfig(instrumentId);
 
-        // If instrument has a fixed layout, use it regardless of keyboard layout setting
-        if (!config.UsesKeyboardLayout && config.FixedLayout != null)
-            return config.FixedLayout;
+        if (config.KeyboardLayouts.Count == 0)
+            return _layoutRegistry.Values.First().Keys;
 
-        // Otherwise use the selected keyboard layout
-        return layout switch
-        {
-            Layout.QWERTY => QWERTY,
-            Layout.QWERTZ => QWERTZ,
-            Layout.AZERTY => AZERTY,
-            Layout.DVORAK => DVORAK,
-            Layout.DVORAKLeft => DVORAKLeft,
-            Layout.DVORAKRight => DVORAKRight,
-            Layout.Colemak => Colemak,
-            _ => QWERTY
-        };
+        var match = config.KeyboardLayouts
+            .FirstOrDefault(l => string.Equals(l.Name, layoutName, StringComparison.OrdinalIgnoreCase));
+
+        return (match ?? config.KeyboardLayouts[0]).Keys;
     }
 
     /// <summary>
-    /// Get the MIDI notes for the specified instrument
+    /// Get the MIDI notes for the specified instrument id
     /// </summary>
-    public static IList<int> GetNotes(Instrument instrument)
+    public static IList<int> GetNotes(string instrumentId)
     {
-        var config = GetInstrumentConfig(instrument);
+        var config = GetInstrumentConfig(instrumentId);
         return config.Notes;
     }
 
