@@ -467,19 +467,32 @@ public class SettingsPageViewModel : Screen
             AppContext.BaseDirectory + "xdt.exe"
         };
 
-        var robloxLocations = new[]
+        var robloxLocations = new List<string>
         {
             // User set location
-            Settings.RobloxLocation,
+            Settings.RobloxLocation
+        };
 
+        // Scan Roblox version directories (Roblox installs to Versions\<version-hash>\)
+        var robloxVersionsDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Roblox\Versions");
+        if (Directory.Exists(robloxVersionsDir))
+        {
+            foreach (var dir in Directory.GetDirectories(robloxVersionsDir))
+            {
+                robloxLocations.Add(Path.Combine(dir, "RobloxPlayerBeta.exe"));
+            }
+        }
+
+        robloxLocations.AddRange(new[]
+        {
             // Common Roblox install locations
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Roblox\Versions\RobloxPlayerBeta.exe"),
             @"C:\Program Files (x86)\Roblox\Versions\RobloxPlayerBeta.exe",
             @"C:\Program Files\Roblox\Versions\RobloxPlayerBeta.exe",
 
             // Relative location (Roblox)
             AppContext.BaseDirectory + "RobloxPlayerBeta.exe"
-        };
+        });
 
         var foundGenshin = false;
         var foundHeartopia = false;
