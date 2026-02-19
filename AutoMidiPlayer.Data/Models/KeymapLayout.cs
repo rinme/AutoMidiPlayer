@@ -46,17 +46,30 @@ public class KeymapLayout
     /// </summary>
     /// <param name="filePath">Path to the .mlf file</param>
     /// <returns>A KeymapLayout instance</returns>
-    /// <exception cref="InvalidDataException">Thrown if file doesn't contain exactly 61 lines</exception>
+    /// <exception cref="InvalidDataException">Thrown if file doesn't contain exactly 61 lines or has invalid characters</exception>
     public static KeymapLayout LoadFromFile(string filePath)
     {
         var lines = File.ReadAllLines(filePath);
         if (lines.Length != 61)
             throw new InvalidDataException($"Keymap file must have exactly 61 lines (found {lines.Length})");
 
+        var notes = new char[61];
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var trimmed = lines[i].Trim();
+            if (string.IsNullOrEmpty(trimmed))
+                throw new InvalidDataException($"Line {i + 1} is empty. Each line must contain exactly one character.");
+            
+            if (trimmed.Length > 1)
+                throw new InvalidDataException($"Line {i + 1} contains multiple characters. Each line must contain exactly one character.");
+            
+            notes[i] = trimmed[0];
+        }
+
         return new KeymapLayout
         {
             Name = Path.GetFileNameWithoutExtension(filePath),
-            Notes = lines.Select(line => line.Trim().FirstOrDefault()).ToArray(),
+            Notes = notes,
             FilePath = filePath
         };
     }

@@ -13,6 +13,9 @@ public static class RobloxKeyboardPlayer
 {
     private static readonly IInputSimulator Input = new InputSimulator();
 
+    // Small delay between key press and release for proper game registration
+    private const int KEY_PRESS_DELAY_MS = 10;
+
     // Win32 API for direct keyboard input (more compatible with games)
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
@@ -41,8 +44,9 @@ public static class RobloxKeyboardPlayer
         public uint dwFlags;
         public uint time;
         public IntPtr dwExtraInfo;
-        private readonly uint pad1;
-        private readonly uint pad2;
+        // Padding to match MOUSEINPUT size (needed for union behavior in Win32)
+        private readonly uint padding1;
+        private readonly uint padding2;
     }
 
     /// <summary>
@@ -109,14 +113,14 @@ public static class RobloxKeyboardPlayer
         {
             SendKeyDirect(VirtualKeyCode.SHIFT, false);
             SendKeyDirect(vk.Value, false);
-            System.Threading.Thread.Sleep(10); // Small delay for key registration
+            System.Threading.Thread.Sleep(KEY_PRESS_DELAY_MS);
             SendKeyDirect(vk.Value, true);
             SendKeyDirect(VirtualKeyCode.SHIFT, true);
         }
         else
         {
             SendKeyDirect(vk.Value, false);
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(KEY_PRESS_DELAY_MS);
             SendKeyDirect(vk.Value, true);
         }
     }
