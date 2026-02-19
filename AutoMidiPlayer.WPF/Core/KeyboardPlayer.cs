@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AutoMidiPlayer.Data.Entities;
+using AutoMidiPlayer.WPF.Core.Instruments;
 using WindowsInput;
 using WindowsInput.Native;
 using static AutoMidiPlayer.WPF.Core.Keyboard;
@@ -80,13 +81,51 @@ public static class KeyboardPlayer
     }
 
     public static void NoteDown(int noteId, string layoutName, string instrumentId)
-        => InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyDown);
+    {
+        // Check if this is a Roblox instrument (character-based input)
+        if (IsRobloxInstrument(instrumentId))
+        {
+            RobloxKeyboardPlayer.NoteDown(noteId);
+        }
+        else
+        {
+            InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyDown);
+        }
+    }
 
     public static void NoteUp(int noteId, string layoutName, string instrumentId)
-        => InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyUp);
+    {
+        // Check if this is a Roblox instrument (character-based input)
+        if (IsRobloxInstrument(instrumentId))
+        {
+            RobloxKeyboardPlayer.NoteUp(noteId);
+        }
+        else
+        {
+            InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyUp);
+        }
+    }
 
     public static void PlayNote(int noteId, string layoutName, string instrumentId)
-        => InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyPress);
+    {
+        // Check if this is a Roblox instrument (character-based input)
+        if (IsRobloxInstrument(instrumentId))
+        {
+            RobloxKeyboardPlayer.PlayNote(noteId);
+        }
+        else
+        {
+            InteractNote(noteId, layoutName, instrumentId, Input.Keyboard.KeyPress);
+        }
+    }
+
+    /// <summary>
+    /// Checks if the instrument is a Roblox instrument that requires character-based input.
+    /// </summary>
+    private static bool IsRobloxInstrument(string instrumentId)
+    {
+        return instrumentId.StartsWith("Roblox", StringComparison.OrdinalIgnoreCase);
+    }
 
     public static bool TryGetKey(string layoutName, string instrumentId, int noteId, out VirtualKeyCode key)
     {
